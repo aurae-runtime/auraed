@@ -2,7 +2,7 @@
  *             Apache 2.0 License Copyright © 2022 The Aurae Authors          *
  *                                                                            *
  *                ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓              *
- *                ┃  █████╗ ██╗   ██╗██████╗  █████╗ ███████╗  ┃              *
+ *                ┃   █████╗ ██╗   ██╗██████╗  █████╗ ███████╗ ┃              *
  *                ┃  ██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝ ┃              *
  *                ┃  ███████║██║   ██║██████╔╝███████║█████╗   ┃              *
  *                ┃  ██╔══██║██║   ██║██╔══██╗██╔══██║██╔══╝   ┃              *
@@ -42,18 +42,18 @@ fn runtime() -> i32 {
 }
 
 fn runtime_environment() {
-    let name = "nova";
+    let name = "auraed";
 
     // Initialize the program
-    let matches = App::new("Nova")
-        .version("1.0")
-        .author("Kris Nóva <kris@nivenly.com>")
+    let matches = App::new("auraed")
+        .version("0.1.0")
+        .author("The Aurae Authors")
         .about(name)
         .arg(
             Arg::with_name("verbose")
                 .short('v')
                 .long("verbose")
-                .help("Toggle the verbosity bit.") // With <3 from @togglebit
+                .help("Toggle the verbosity bit.")
                 .takes_value(false),
         )
         .get_matches();
