@@ -1,32 +1,12 @@
-/*===========================================================================*\
- *           MIT License Copyright (c) 2022 Kris Nóva <kris@nivenly.com>     *
- *                                                                           *
- *                ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓                *
- *                ┃   ███╗   ██╗ ██████╗ ██╗   ██╗ █████╗   ┃                *
- *                ┃   ████╗  ██║██╔═████╗██║   ██║██╔══██╗  ┃                *
- *                ┃   ██╔██╗ ██║██║██╔██║██║   ██║███████║  ┃                *
- *                ┃   ██║╚██╗██║████╔╝██║╚██╗ ██╔╝██╔══██║  ┃                *
- *                ┃   ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║  ┃                *
- *                ┃   ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝  ┃                *
- *                ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛                *
- *                                                                           *
- *                       This machine kills fascists.                        *
- *                                                                           *
-\*===========================================================================*/
-
 syntax = "proto3";
 
 package proto.echo; // This is arbitrary, set it to your directory structure
 
 // EchoRequest is the request for echo.
-message EchoRequest {
-  string message = 1;
-}
+message EchoRequest { string message = 1; }
 
 // EchoResponse is the response for echo.
-message EchoResponse {
-  string message = 1;
-}
+message EchoResponse { string message = 1; }
 
 // Echo is the echo service.
 service Echo {
@@ -37,5 +17,6 @@ service Echo {
   // ClientStreamingEcho is client side streaming.
   rpc ClientStreamingEcho(stream EchoRequest) returns (EchoResponse) {}
   // BidirectionalStreamingEcho is bidi streaming.
-  rpc BidirectionalStreamingEcho(stream EchoRequest) returns (stream EchoResponse) {}
+  rpc BidirectionalStreamingEcho(stream EchoRequest)
+      returns (stream EchoResponse) {}
 }

@@ -5,17 +5,17 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "rpc-server"
-path = "src/rpc/server.rs"
+#[[bin]]
+#name = "rpc-server"
+#path = "src/rpc/server.rs"
+#
+#[[bin]]
+#name = "rpc-client"
+#path = "src/rpc/client.rs"
 
 [[bin]]
-name = "rpc-client"
-path = "src/rpc/client.rs"
-
-[[bin]]
-name = "cmd"
-path = "src/cmd/main.rs"
+name = "auraed"
+path = "src/bin/main.rs"
 
 
 [dependencies]
@@ -33,4 +33,3 @@ h2 = "0.3.13"
 
 [build-dependencies]
 tonic-build = "0.8"
-
