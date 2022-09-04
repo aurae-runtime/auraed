@@ -29,6 +29,15 @@
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-   // tonic_build::compile_protos("v1/echo.v1")?;
+
+    // TODO This assumes we are building from the "environment" repository
+    // TODO As soon as we start cutting releases of the API we will need to
+    // TODO    specific API versions.
+    // TODO We will need a more reliable way to reference the proto
+
+
+    // Runtime
+    tonic_build::compile_protos("../api/v1/echo.proto")?;
+
     Ok(())
 }
