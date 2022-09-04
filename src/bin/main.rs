@@ -46,6 +46,9 @@ async fn daemon() -> i32 {
     let name = "auraed";
 
     // Initialize the program
+    //
+    // TODO We need to plumb the TLS material into a struct
+    // TODO for the program. More: https://docs.rs/clap/3.2.20/clap/
     let matches = App::new("auraed")
         .version("0.1.0")
         .author("The Aurae Authors")
