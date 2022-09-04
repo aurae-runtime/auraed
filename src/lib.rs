@@ -28,14 +28,22 @@
  *                                                                            *
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-use std::path::Path;
 use log::*;
+use std::path::Path;
+//use pb::{EchoRequest, EchoResponse};
 
-pub fn runtime(sock: &Path, key: &Path)  {
+pub fn runtime(sock: &Path, key: &Path) {
+    // Initialize the program
     info!("*********************************************");
     info!("Socket: {}", sock.display());
     info!("Key   : {}", key.display());
-    info!("Thanks everyone for a great stream!");
     info!("*********************************************");
 
+    // let server = EchoServer {};
+    // Server::builder()
+    //
+    //     .add_service(pb::echo_server::EchoServer::new(server))
+    //     .serve("[::1]:50051".to_socket_addrs().unwrap().next().unwrap())
+    //     .await
+    //     .unwrap();
 }

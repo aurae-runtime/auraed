@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     // Runtime
-    tonic_build::compile_protos("../api/v1/echo.proto")?;
+    tonic_build::compile_protos("../api/v1/runtime.proto")?;
 
     Ok(())
 }

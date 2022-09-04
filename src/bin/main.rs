@@ -28,156 +28,19 @@
  *                                                                            *
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-
-pub mod pb {
-    tonic::include_proto!("v1.echo.proto");
-}
-
-use clap::{Arg, App};
-use syslog::{BasicLogger, Formatter3164, Facility};
-use log::*;
-use futures::Stream;
-use std::{error::Error, path::Path, io::ErrorKind, net::ToSocketAddrs, pin::Pin, time::Duration};
-use tokio::sync::mpsc;
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
-use tonic::{transport::Server, Request, Response, Status, Streaming};
 use auraed::*;
-use pb::{EchoRequest, EchoResponse};
+use clap::{App, Arg};
+use std::path::Path;
+use syslog::{BasicLogger, Facility, Formatter3164};
+
+//use futures::Stream;
+//use std::{error::Error, io::ErrorKind, net::ToSocketAddrs, path::Path, pin::Pin, time::Duration};
+//use tokio::sync::mpsc;
+//use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+//use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 const EXIT_OKAY: i32 = 0;
 //const EXIT_ERROR: i32 = 1;
-
-type EchoResult<T> = Result<Response<T>, Status>;
-type ResponseStream = Pin<Box<dyn Stream<Item = Result<EchoResponse, Status>> + Send>>;
-
-fn match_for_io_error(err_status: &Status) -> Option<&std::io::Error> {
-    let mut err: &(dyn Error + 'static) = err_status;
-
-    loop {
-        if let Some(io_err) = err.downcast_ref::<std::io::Error>() {
-            return Some(io_err);
-        }
-
-        // h2::Error do not expose std::io::Error with `source()`
-        // https://github.com/hyperium/h2/pull/462
-        if let Some(h2_err) = err.downcast_ref::<h2::Error>() {
-            if let Some(io_err) = h2_err.get_io() {
-                return Some(io_err);
-            }
-        }
-
-        err = match err.source() {
-            Some(err) => err,
-            None => return None,
-        };
-    }
-}
-
-#[derive(Debug)]
-pub struct EchoServer {}
-
-#[tonic::async_trait]
-impl pb::echo_server::Echo for EchoServer {
-    async fn unary_echo(&self, _: Request<EchoRequest>) -> EchoResult<EchoResponse> {
-        Err(Status::unimplemented("not implemented"))
-    }
-
-    type ServerStreamingEchoStream = ResponseStream;
-
-    async fn server_streaming_echo(
-        &self,
-        req: Request<EchoRequest>,
-    ) -> EchoResult<Self::ServerStreamingEchoStream> {
-        println!("EchoServer::server_streaming_echo");
-        println!("	client connected from: {:?}", req.remote_addr());
-
-        // creating infinite stream with requested message
-        let repeat = std::iter::repeat(EchoResponse {
-            message: req.into_inner().message,
-        });
-        let mut stream = Box::pin(tokio_stream::iter(repeat).throttle(Duration::from_millis(200)));
-
-        // spawn and channel are required if you want handle "disconnect" functionality
-        // the `out_stream` will not be polled after client disconnect
-        let (tx, rx) = mpsc::channel(128);
-        tokio::spawn(async move {
-            while let Some(item) = stream.next().await {
-                match tx.send(Result::<_, Status>::Ok(item)).await {
-                    Ok(_) => {
-                        // item (server response) was queued to be send to client
-                    }
-                    Err(_item) => {
-                        // output_stream was build from rx and both are dropped
-                        break;
-                    }
-                }
-            }
-            println!("	client disconnected");
-        });
-
-        let output_stream = ReceiverStream::new(rx);
-        Ok(Response::new(
-            Box::pin(output_stream) as Self::ServerStreamingEchoStream
-        ))
-    }
-
-    async fn client_streaming_echo(
-        &self,
-        _: Request<Streaming<EchoRequest>>,
-    ) -> EchoResult<EchoResponse> {
-        Err(Status::unimplemented("not implemented"))
-    }
-
-    type BidirectionalStreamingEchoStream = ResponseStream;
-
-    async fn bidirectional_streaming_echo(
-        &self,
-        req: Request<Streaming<EchoRequest>>,
-    ) -> EchoResult<Self::BidirectionalStreamingEchoStream> {
-        println!("EchoServer::bidirectional_streaming_echo");
-
-        let mut in_stream = req.into_inner();
-        let (tx, rx) = mpsc::channel(128);
-
-        // this spawn here is required if you want to handle connection error.
-        // If we just map `in_stream` and write it back as `out_stream` the `out_stream`
-        // will be drooped when connection error occurs and error will never be propagated
-        // to mapped version of `in_stream`.
-        tokio::spawn(async move {
-            while let Some(result) = in_stream.next().await {
-                match result {
-                    Ok(v) => tx
-                        .send(Ok(EchoResponse { message: v.message }))
-                        .await
-                        .expect("working rx"),
-                    Err(err) => {
-                        if let Some(io_err) = match_for_io_error(&err) {
-                            if io_err.kind() == ErrorKind::BrokenPipe {
-                                // here you can handle special case when client
-                                // disconnected in unexpected way
-                                eprintln!("	client disconnected: broken pipe");
-                                break;
-                            }
-                        }
-
-                        match tx.send(Err(err)).await {
-                            Ok(_) => (),
-                            Err(_err) => break, // response was droped
-                        }
-                    }
-                }
-            }
-            println!("	stream ended");
-        });
-
-        // echo just write the same data that was received
-        let out_stream = ReceiverStream::new(rx);
-
-        Ok(Response::new(
-            Box::pin(out_stream) as Self::BidirectionalStreamingEchoStream
-        ))
-    }
-}
 
 async fn daemon() -> i32 {
     let name = "auraed";
@@ -187,23 +50,29 @@ async fn daemon() -> i32 {
         .version("0.1.0")
         .author("The Aurae Authors")
         .about(name)
-        .arg(Arg::with_name("verbose")
-            .short('v')
-            .long("verbose")
-            .help("Toggle the verbosity bit.")
-            .takes_value(false))
-        .arg(Arg::with_name("key")
-            .short('k')
-            .long("key")
-            .help("Set a public encryption key: rsa, pem, ed25519, etc")
-            .default_value("~/.ssh/id_aurae")
-            .takes_value(true))
-        .arg(Arg::with_name("sock")
-            .short('s')
-            .long("sock")
-            .help("Set a local socket path.")
-            .default_value("/var/run/aurae.sock")
-            .takes_value(true))
+        .arg(
+            Arg::with_name("verbose")
+                .short('v')
+                .long("verbose")
+                .help("Toggle the verbosity bit.")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("key")
+                .short('k')
+                .long("key")
+                .help("Set a public encryption key: rsa, pem, ed25519, etc")
+                .default_value("~/.ssh/id_aurae")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("sock")
+                .short('s')
+                .long("sock")
+                .help("Set a local socket path.")
+                .default_value("/var/run/aurae.sock")
+                .takes_value(true),
+        )
         .get_matches();
 
     // The logger will log to stdout and the syslog by default.
@@ -238,36 +107,17 @@ async fn daemon() -> i32 {
         Err(e) => panic!("unable to connect to syslog: {:?}", e),
     };
 
-
-
-    // Load the key and the socket
+    // Load Variables
     let key = matches.value_of("key").unwrap();
     let sock = matches.value_of("sock").unwrap();
 
-    // Initialize the program
-    info!("*");
-    info!("* Aurae Runtime.");
-    info!("*");
-    info!("* Runtime environment initialized: {}", name);
-    info!("*  -> Syslog process name: {}", name);
-    debug!("* Runtime **debugging** enabled: {}", name);
-
+    // Runtime
     runtime(Path::new(sock), Path::new(key));
-
-    let server = EchoServer {};
-    Server::builder()
-        .add_service(pb::echo_server::EchoServer::new(server))
-        .serve("[::1]:50051".to_socket_addrs().unwrap().next().unwrap())
-        .await
-        .unwrap();
-
     return EXIT_OKAY;
 }
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exit_code = daemon();
     std::process::exit(exit_code.await);
 }
-
