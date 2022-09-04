@@ -37,17 +37,15 @@ use clap::{Arg, App};
 use syslog::{BasicLogger, Formatter3164, Facility};
 use log::*;
 use futures::Stream;
-use std::{error::Error, io::ErrorKind, net::ToSocketAddrs, pin::Pin, time::Duration};
+use std::{error::Error, path::Path, io::ErrorKind, net::ToSocketAddrs, pin::Pin, time::Duration};
 use tokio::sync::mpsc;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use tonic::{transport::Server, Request, Response, Status, Streaming};
-
+use auraed::*;
 use pb::{EchoRequest, EchoResponse};
-
 
 const EXIT_OKAY: i32 = 0;
 //const EXIT_ERROR: i32 = 1;
-
 
 type EchoResult<T> = Result<Response<T>, Status>;
 type ResponseStream = Pin<Box<dyn Stream<Item = Result<EchoResponse, Status>> + Send>>;
@@ -181,7 +179,6 @@ impl pb::echo_server::Echo for EchoServer {
     }
 }
 
-
 async fn daemon() -> i32 {
     let name = "auraed";
 
@@ -190,13 +187,23 @@ async fn daemon() -> i32 {
         .version("0.1.0")
         .author("The Aurae Authors")
         .about(name)
-        .arg(
-            Arg::with_name("verbose")
-                .short('v')
-                .long("verbose")
-                .help("Toggle the verbosity bit.")
-                .takes_value(false),
-        )
+        .arg(Arg::with_name("verbose")
+            .short('v')
+            .long("verbose")
+            .help("Toggle the verbosity bit.")
+            .takes_value(false))
+        .arg(Arg::with_name("key")
+            .short('k')
+            .long("key")
+            .help("Set a public encryption key: rsa, pem, ed25519, etc")
+            .default_value("~/.ssh/id_aurae")
+            .takes_value(true))
+        .arg(Arg::with_name("sock")
+            .short('s')
+            .long("sock")
+            .help("Set a local socket path.")
+            .default_value("/var/run/aurae.sock")
+            .takes_value(true))
         .get_matches();
 
     // The logger will log to stdout and the syslog by default.
@@ -231,6 +238,12 @@ async fn daemon() -> i32 {
         Err(e) => panic!("unable to connect to syslog: {:?}", e),
     };
 
+
+
+    // Load the key and the socket
+    let key = matches.value_of("key").unwrap();
+    let sock = matches.value_of("sock").unwrap();
+
     // Initialize the program
     info!("*");
     info!("* Aurae Runtime.");
@@ -238,6 +251,8 @@ async fn daemon() -> i32 {
     info!("* Runtime environment initialized: {}", name);
     info!("*  -> Syslog process name: {}", name);
     debug!("* Runtime **debugging** enabled: {}", name);
+
+    runtime(Path::new(sock), Path::new(key));
 
     let server = EchoServer {};
     Server::builder()
