@@ -28,15 +28,20 @@
  *                                                                            *
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Runtime
-    tonic_build::configure().compile(
-        &[
-            "../api/v1/meta.proto",
-            "../api/v1/runtime.proto",
-            "../api/v1/observe.proto",
-        ],
-        &["../api/v1"],
-    )?;
-    Ok(())
+tonic::include_proto!("observe");
+
+use crate::observe::observe_server::Observe;
+use tonic::{Request, Response, Status};
+
+#[derive(Debug, Default, Clone)]
+pub struct ObserveService {}
+
+#[tonic::async_trait]
+impl Observe for ObserveService {
+    async fn status(
+        &self,
+        _request: Request<StatusRequest>,
+    ) -> Result<Response<StatusResponse>, Status> {
+        todo!()
+    }
 }

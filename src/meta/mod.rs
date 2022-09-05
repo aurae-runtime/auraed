@@ -29,6 +29,3 @@
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 tonic::include_proto!("meta");
-
-// #[derive(Debug, Default)]
-// pub struct AuraeMeta {}
