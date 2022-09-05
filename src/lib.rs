@@ -35,8 +35,9 @@ use log::*;
 use std::path::PathBuf;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
-use tonic::transport::Server;
+use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 mod meta;
+use std::fs;
 mod runtime;
 
 #[derive(Debug)]
@@ -49,12 +50,29 @@ pub struct AuraedRuntime {
 
 impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let _ = fs::remove_file(&self.socket);
         trace!("{:#?}", self);
+
+        let server_crt = tokio::fs::read(&self.server_crt).await?;
+        let server_key = tokio::fs::read(&self.server_key).await?;
+        let server_identity = Identity::from_pem(server_crt, server_key);
+        info!("Register Server SSL Identity");
+
+        let ca_crt = tokio::fs::read(&self.ca_crt).await?;
+        let ca_crt = Certificate::from_pem(ca_crt);
+        info!("Register Server SSL Certificate Authority (CA)");
+
+        let tls = ServerTlsConfig::new()
+            .identity(server_identity)
+            .client_ca_root(ca_crt);
+        info!("Validating SSL Identity and Root Certificate Authority (CA)");
+
         let sock = UnixListener::bind(&self.socket)?;
         let sock_stream = UnixListenerStream::new(sock);
         info!("Starting Socket: {}", self.socket.display());
         let runtime_service = LocalRuntimeService::default();
         Server::builder()
+            .tls_config(tls)?
             .add_service(LocalRuntimeServer::new(runtime_service))
             .serve_with_incoming(sock_stream)
             .await?;
