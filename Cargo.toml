@@ -39,7 +39,7 @@ name = "auraed"
 path = "src/bin/main.rs"
 
 [dependencies]
-clap = "3.2.16"
+clap = { version = "3.1.20", features = ["derive"] }
 log = "0.4.17"
 multi_log = "0.1.2"
 simplelog = "0.12.0"

@@ -29,21 +29,27 @@
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 use log::*;
-use std::path::Path;
-//use pb::{EchoRequest, EchoResponse};
+use std::path::PathBuf;
 
-pub fn runtime(sock: &Path, key: &Path) {
-    // Initialize the program
-    info!("*********************************************");
-    info!("Socket: {}", sock.display());
-    info!("Key   : {}", key.display());
-    info!("*********************************************");
+#[derive(Debug)]
+pub struct AuraedRuntime {
+    pub server_crt: PathBuf,
+    pub server_key: PathBuf,
+    pub ca_crt: PathBuf,
+    pub socket: PathBuf,
+}
 
-    // let server = EchoServer {};
-    // Server::builder()
-    //
-    //     .add_service(pb::echo_server::EchoServer::new(server))
-    //     .serve("[::1]:50051".to_socket_addrs().unwrap().next().unwrap())
-    //     .await
-    //     .unwrap();
+impl AuraedRuntime {
+    pub fn runtime(&self) {
+        trace!("{:#?}", self);
+        info!("Runtime Started!")
+
+        // let server = EchoServer {};
+        // Server::builder()
+        //
+        //     .add_service(pb::echo_server::EchoServer::new(server))
+        //     .serve("[::1]:50051".to_socket_addrs().unwrap().next().unwrap())
+        //     .await
+        //     .unwrap();
+    }
 }

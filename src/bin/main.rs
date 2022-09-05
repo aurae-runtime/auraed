@@ -29,10 +29,10 @@
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 use auraed::*;
-use clap::{App, Arg};
-use std::path::Path;
+use clap::Parser;
+use log::*;
+use std::path::PathBuf;
 use syslog::{BasicLogger, Facility, Formatter3164};
-
 //use futures::Stream;
 //use std::{error::Error, io::ErrorKind, net::ToSocketAddrs, path::Path, pin::Pin, time::Duration};
 //use tokio::sync::mpsc;
@@ -40,43 +40,41 @@ use syslog::{BasicLogger, Facility, Formatter3164};
 //use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 const EXIT_OKAY: i32 = 0;
+const AURAE_SOCK: &str = "/var/run/aurae.sock";
+const AURAED_SYSLOG_NAME: &str = "auraed";
 //const EXIT_ERROR: i32 = 1;
 
-async fn daemon() -> i32 {
-    let name = "auraed";
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct AuraedOptions {
+    #[clap(
+        short,
+        long,
+        value_parser,
+        default_value = "/etc/aurae/pki/_signed.server.crt.pem"
+    )]
+    server_crt: String,
 
-    // Initialize the program
-    //
-    // TODO We need to plumb the TLS material into a struct
-    // TODO for the program. More: https://docs.rs/clap/3.2.20/clap/
-    let matches = App::new("auraed")
-        .version("0.1.0")
-        .author("The Aurae Authors")
-        .about(name)
-        .arg(
-            Arg::with_name("verbose")
-                .short('v')
-                .long("verbose")
-                .help("Toggle the verbosity bit.")
-                .takes_value(false),
-        )
-        .arg(
-            Arg::with_name("key")
-                .short('k')
-                .long("key")
-                .help("Set a public encryption key: rsa, pem, ed25519, etc")
-                .default_value("~/.ssh/id_aurae")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("sock")
-                .short('s')
-                .long("sock")
-                .help("Set a local socket path.")
-                .default_value("/var/run/aurae.sock")
-                .takes_value(true),
-        )
-        .get_matches();
+    #[clap(
+        short,
+        long,
+        value_parser,
+        default_value = "/etc/aurae/pki/server.key.pem"
+    )]
+    server_key: String,
+
+    #[clap(short, long, value_parser, default_value = "/etc/aurae/pki/ca.crt.pem")]
+    ca_crt: String,
+
+    #[clap(short, long, value_parser, default_value = AURAE_SOCK)]
+    socket: String,
+
+    #[clap(short, long)]
+    verbose: bool,
+}
+
+async fn daemon() -> i32 {
+    let options = AuraedOptions::parse();
 
     // The logger will log to stdout and the syslog by default.
     // We hold the opinion that the program is either "verbose"
@@ -84,17 +82,18 @@ async fn daemon() -> i32 {
     //
     // Normal mode: Info, Warn, Error
     // Verbose mode: Debug, Trace, Info, Warn, Error
-    let logger_level = if matches.is_present("verbose") {
-        log::Level::Trace
+    // let logger_level = if matches.is_present("verbose") {
+    let logger_level = if options.verbose {
+        Level::Trace
     } else {
-        log::Level::Info
+        Level::Info
     };
 
     // Syslog formatter
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
         hostname: None,
-        process: name.into(),
+        process: AURAED_SYSLOG_NAME.into(),
         pid: 0,
     };
 
@@ -110,12 +109,23 @@ async fn daemon() -> i32 {
         Err(e) => panic!("unable to connect to syslog: {:?}", e),
     };
 
+    trace!("**Logging: Verbose Mode**");
+    info!("Starting Aurae Daemon Runtime...");
+
     // Load Variables
-    let key = matches.value_of("key").unwrap();
-    let sock = matches.value_of("sock").unwrap();
+    //let key = matches.value_of("key").unwrap();
+    //let sock = matches.value_of("sock").unwrap();
+
+    let runtime = AuraedRuntime {
+        server_crt: PathBuf::from(options.server_crt),
+        server_key: PathBuf::from(options.server_key),
+        ca_crt: PathBuf::from(options.ca_crt),
+        socket: PathBuf::from(options.socket),
+    };
+    runtime.runtime();
 
     // Runtime
-    runtime(Path::new(sock), Path::new(key));
+    //runtime(Path::new(sock), Path::new(key));
     return EXIT_OKAY;
 }
 
