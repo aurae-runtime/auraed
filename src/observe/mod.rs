@@ -48,7 +48,7 @@ impl Observe for ObserveService {
         // let state: String = "".into();
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
-            code: 0,
+            code: -1,
             message: "".into(),
         });
         let response = StatusResponse {
