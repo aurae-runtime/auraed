@@ -31,9 +31,17 @@
 tonic::include_proto!("observe");
 tonic::include_proto!("meta");
 
-use crate::meta;
+use crate::meta; //  For AuraeMeta type
+use crate::meta::*;
 use crate::observe::observe_server::Observe;
 use tonic::{Request, Response, Status};
+
+#[allow(dead_code)]
+pub const STATUS_UNKNOWN: &str = "Unknown";
+#[allow(dead_code)]
+pub const STATUS_READY: &str = "Ready";
+#[allow(dead_code)]
+pub const STATUS_ERROR: &str = "Error";
 
 #[derive(Debug, Default, Clone)]
 pub struct ObserveService {}
@@ -44,16 +52,14 @@ impl Observe for ObserveService {
         &self,
         _request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, Status> {
-        // let meta = AuraeMeta::default();
-        // let state: String = "".into();
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
-            code: -1,
-            message: "".into(),
+            code: CODE_UNKNOWN,
+            message: MESSAGE_UNKNOWN.into(),
         });
         let response = StatusResponse {
             meta,
-            state: "".into(),
+            state: STATUS_UNKNOWN.into(),
         };
         Ok(Response::new(response))
     }
