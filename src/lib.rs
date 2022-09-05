@@ -40,7 +40,7 @@ pub struct AuraedRuntime {
 }
 
 impl AuraedRuntime {
-    pub fn start(&self) {
+    pub fn run(&self) {
         trace!("{:#?}", self);
         info!("Runtime Started!")
 

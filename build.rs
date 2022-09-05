@@ -29,15 +29,14 @@
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     // TODO This assumes we are building from the "environment" repository
     // TODO As soon as we start cutting releases of the API we will need to
     // TODO    specific API versions.
     // TODO We will need a more reliable way to reference the proto
 
-
     // Runtime
-    tonic_build::compile_protos("../api/v1/runtime.proto")?;
+    tonic_build::configure().compile(&["../api/v1/meta.proto"], &["../api/v1"])?;
+    // tonic_build::compile(&["../api/v1/meta.proto"], &["../api/v1/"])?;
 
     Ok(())
 }
