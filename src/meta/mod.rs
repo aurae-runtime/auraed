@@ -28,35 +28,7 @@
  *                                                                            *
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-use crate::runtime::local_runtime_server::LocalRuntimeServer;
-use crate::runtime::LocalRuntimeService;
+tonic::include_proto!("meta");
 
-use log::*;
-use std::path::PathBuf;
-use tonic::transport::Server;
-mod meta;
-mod runtime;
-
-#[derive(Debug)]
-pub struct AuraedRuntime {
-    pub server_crt: PathBuf,
-    pub server_key: PathBuf,
-    pub ca_crt: PathBuf,
-    pub socket: PathBuf,
-}
-
-impl AuraedRuntime {
-    pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
-        trace!("{:#?}", self);
-        info!("Runtime Started!");
-
-        let address = "[::1]:8080".parse().unwrap();
-        let runtime_service = LocalRuntimeService::default();
-
-        Server::builder()
-            .add_service(LocalRuntimeServer::new(runtime_service))
-            .serve(address)
-            .await?;
-        Ok(())
-    }
-}
+// #[derive(Debug, Default)]
+// pub struct AuraeMeta {}

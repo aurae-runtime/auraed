@@ -122,10 +122,7 @@ async fn daemon() -> i32 {
         ca_crt: PathBuf::from(options.ca_crt),
         socket: PathBuf::from(options.socket),
     };
-    runtime.run();
-
-    // Runtime
-    //runtime(Path::new(sock), Path::new(key));
+    let _ = runtime.run().await;
     return EXIT_OKAY;
 }
 
