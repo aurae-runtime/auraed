@@ -40,9 +40,9 @@ use syslog::{BasicLogger, Facility, Formatter3164};
 //use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 const EXIT_OKAY: i32 = 0;
+const EXIT_ERROR: i32 = 1;
 const AURAE_SOCK: &str = "/var/run/aurae.sock";
 const AURAED_SYSLOG_NAME: &str = "auraed";
-//const EXIT_ERROR: i32 = 1;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -122,8 +122,18 @@ async fn daemon() -> i32 {
         ca_crt: PathBuf::from(options.ca_crt),
         socket: PathBuf::from(options.socket),
     };
-    let _ = runtime.run().await;
-    return EXIT_OKAY;
+
+    let e = runtime.run().await;
+    if e.is_err() {
+        error!("{:?}", e);
+    }
+
+    // Return
+    if e.is_err() {
+        EXIT_ERROR
+    } else {
+        EXIT_OKAY
+    }
 }
 
 #[tokio::main]

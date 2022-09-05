@@ -33,6 +33,8 @@ use crate::runtime::LocalRuntimeService;
 
 use log::*;
 use std::path::PathBuf;
+use tokio::net::UnixListener;
+use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::Server;
 mod meta;
 mod runtime;
@@ -48,14 +50,13 @@ pub struct AuraedRuntime {
 impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         trace!("{:#?}", self);
-        info!("Runtime Started!");
-
-        let address = "[::1]:8080".parse().unwrap();
+        let sock = UnixListener::bind(&self.socket)?;
+        let sock_stream = UnixListenerStream::new(sock);
+        info!("Starting Socket: {}", self.socket.display());
         let runtime_service = LocalRuntimeService::default();
-
         Server::builder()
             .add_service(LocalRuntimeServer::new(runtime_service))
-            .serve(address)
+            .serve_with_incoming(sock_stream)
             .await?;
         Ok(())
     }
