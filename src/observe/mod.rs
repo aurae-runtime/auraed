@@ -29,7 +29,9 @@
 \* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 tonic::include_proto!("observe");
+tonic::include_proto!("meta");
 
+use crate::meta;
 use crate::observe::observe_server::Observe;
 use tonic::{Request, Response, Status};
 
@@ -42,6 +44,17 @@ impl Observe for ObserveService {
         &self,
         _request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, Status> {
-        todo!()
+        // let meta = AuraeMeta::default();
+        // let state: String = "".into();
+        let mut meta = Vec::new();
+        meta.push(meta::AuraeMeta {
+            code: 0,
+            message: "".into(),
+        });
+        let response = StatusResponse {
+            meta,
+            state: "".into(),
+        };
+        Ok(Response::new(response))
     }
 }
