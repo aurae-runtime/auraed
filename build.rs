@@ -29,7 +29,6 @@
 \* -------------------------------------------------------------------------- */
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Runtime
     tonic_build::configure().compile(
         &[
             "../api/v1/meta.proto",
