@@ -46,9 +46,11 @@ use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
 #[derive(Debug)]
 pub struct AuraedRuntime {
+    // Root CA
+    pub ca_crt: PathBuf,
+
     pub server_crt: PathBuf,
     pub server_key: PathBuf,
-    pub ca_crt: PathBuf,
     pub socket: PathBuf,
 }
 

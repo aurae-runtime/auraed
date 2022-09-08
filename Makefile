@@ -33,7 +33,7 @@ all: compile
 executable   ?=  auraed
 
 compile: ## Compile for the local architecture ⚙
-	@cargo build --release
+	@cargo build
 
 install: ## Install the program to /usr/bin 🎉
 	@echo "Installing..."
