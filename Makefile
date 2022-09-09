@@ -31,17 +31,18 @@
 all: compile
 
 executable   ?=  auraed
+cargo         =  cargo +nightly
 
 compile: ## Compile for the local architecture ⚙
-	@cargo build
+	@$(cargo) build --debug
 
-install: ## Install the program to /usr/bin 🎉
+install:  ## Build and install (debug) 🎉
 	@echo "Installing..."
-	@cargo install --path .
+	@$(cargo) install --debug --path .
 
-#test: clean compile install ## 🤓 Run go tests
-#	@echo "Testing..."
-#	go test -v ./...
+release: ## Build and install (release) 🎉
+	@echo "Installing..."
+	@$(cargo) install --path .
 
 clean: ## Clean your artifacts 🧼
 	@echo "Cleaning..."

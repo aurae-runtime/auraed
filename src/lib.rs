@@ -28,6 +28,12 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
+// Issue tracking: https://github.com/rust-lang/rust/issues/85410
+// Here we need to build an abstract socket from a SocketAddr until
+// tokio supports abstract sockets natively
+#![feature(unix_socket_abstract)]
+use std::os::unix::net::SocketAddr;
+
 mod meta;
 mod observe;
 mod runtime;
@@ -51,11 +57,15 @@ pub struct AuraedRuntime {
 
     pub server_crt: PathBuf,
     pub server_key: PathBuf,
-    pub socket: PathBuf,
+    pub socket: PathBuf, // TODO replace with namespace
 }
 
 impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Manage the socket permission/groups first
+
+        // TODO entertain abstract sockets
+
         let _ = fs::remove_file(&self.socket);
         trace!("{:#?}", self);
 
@@ -73,9 +83,17 @@ impl AuraedRuntime {
             .client_ca_root(ca_crt);
         info!("Validating SSL Identity and Root Certificate Authority (CA)");
 
-        let sock = UnixListener::bind(&self.socket)?;
+        // Aurae leverages Unix Abstract Sockets
+        // Read more about Abstract Sockets: https://man7.org/linux/man-pages/man7/unix.7.html
+        // TODO Consider this: https://docs.rs/nix/latest/nix/sys/socket/struct.UnixAddr.html#method.new_abstract
+        //let sock = UnixListener::bind(&self.socket)?;
+        let addr = SocketAddr::from_abstract_namespace(b"aurae")?; // Linux only
+        let listener = std::os::unix::net::UnixListener::bind_addr(&addr)?;
+        let sock = UnixListener::from_std(listener)?;
         let sock_stream = UnixListenerStream::new(sock);
         info!("Starting Socket: {}", self.socket.display());
+
+        // Build the server
         Server::builder()
             .tls_config(tls)?
             .add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))

@@ -41,7 +41,7 @@ use syslog::{BasicLogger, Facility, Formatter3164};
 
 const EXIT_OKAY: i32 = 0;
 const EXIT_ERROR: i32 = 1;
-const AURAE_SOCK: &str = "/var/run/aurae.sock";
+const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 const AURAED_SYSLOG_NAME: &str = "auraed";
 
 #[derive(Parser, Debug)]
