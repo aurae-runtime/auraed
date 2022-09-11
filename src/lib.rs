@@ -31,8 +31,8 @@
 // Issue tracking: https://github.com/rust-lang/rust/issues/85410
 // Here we need to build an abstract socket from a SocketAddr until
 // tokio supports abstract sockets natively
-#![feature(unix_socket_abstract)]
-use std::os::unix::net::SocketAddr;
+// #![feature(unix_socket_abstract)]
+// use std::os::unix::net::SocketAddr;
 
 mod meta;
 mod observe;
@@ -45,6 +45,8 @@ use crate::runtime::LocalRuntimeService;
 
 use log::*;
 use std::fs;
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
 use std::path::PathBuf;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
@@ -62,11 +64,9 @@ pub struct AuraedRuntime {
 
 impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
-        // Manage the socket permission/groups first
-
-        // TODO entertain abstract sockets
-
+        // Manage the socket permission/groups first\
         let _ = fs::remove_file(&self.socket);
+        tokio::fs::create_dir_all(Path::new(&self.socket).parent().unwrap()).await?;
         trace!("{:#?}", self);
 
         let server_crt = tokio::fs::read(&self.server_crt).await?;
@@ -86,20 +86,35 @@ impl AuraedRuntime {
         // Aurae leverages Unix Abstract Sockets
         // Read more about Abstract Sockets: https://man7.org/linux/man-pages/man7/unix.7.html
         // TODO Consider this: https://docs.rs/nix/latest/nix/sys/socket/struct.UnixAddr.html#method.new_abstract
-        //let sock = UnixListener::bind(&self.socket)?;
-        let addr = SocketAddr::from_abstract_namespace(b"aurae")?; // Linux only
-        let listener = std::os::unix::net::UnixListener::bind_addr(&addr)?;
-        let sock = UnixListener::from_std(listener)?;
-        let sock_stream = UnixListenerStream::new(sock);
-        //info!("Starting Socket: {}", self.socket.display());
+        // let addr = SocketAddr::from_abstract_namespace(b"aurae")?; // Linux only
+        // let addr = "[::1]:1234".parse().unwrap();
 
-        // Build the server
-        Server::builder()
-            .tls_config(tls)?
-            .add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
-            .add_service(ObserveServer::new(ObserveService::default()))
-            .serve_with_incoming(sock_stream)
-            .await?;
+        let sock = UnixListener::bind(&self.socket)?;
+        let sock_stream = UnixListenerStream::new(sock);
+
+        // Run the server concurrently
+        let handle = tokio::spawn(
+            Server::builder()
+                .tls_config(tls)?
+                .add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
+                .add_service(ObserveServer::new(ObserveService::default()))
+                .serve_with_incoming(sock_stream),
+        );
+
+        trace!("Setting socket mode {} -> 766", &self.socket.display());
+
+        // We set the mode to 766 for the Unix domain socket.
+        // This is what allows non-root users to dial the socket
+        // and authenticate with mTLS.
+        fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766)).unwrap();
+        info!(
+            "Non-root User Access Socket Created: {}",
+            self.socket.display()
+        );
+
+        // Event loop
+        // let _ = join!(handle);
+        let _ = handle.await?;
         Ok(())
     }
 }
