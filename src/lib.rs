@@ -91,7 +91,7 @@ impl AuraedRuntime {
         let listener = std::os::unix::net::UnixListener::bind_addr(&addr)?;
         let sock = UnixListener::from_std(listener)?;
         let sock_stream = UnixListenerStream::new(sock);
-        info!("Starting Socket: {}", self.socket.display());
+        //info!("Starting Socket: {}", self.socket.display());
 
         // Build the server
         Server::builder()

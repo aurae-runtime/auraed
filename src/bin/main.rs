@@ -48,22 +48,16 @@ const AURAED_SYSLOG_NAME: &str = "auraed";
 #[clap(author, version, about, long_about = None)]
 struct AuraedOptions {
     #[clap(
-        short,
         long,
         value_parser,
         default_value = "/etc/aurae/pki/_signed.server.crt.pem"
     )]
     server_crt: String,
 
-    #[clap(
-        short,
-        long,
-        value_parser,
-        default_value = "/etc/aurae/pki/server.key.pem"
-    )]
+    #[clap(long, value_parser, default_value = "/etc/aurae/pki/server.key.pem")]
     server_key: String,
 
-    #[clap(short, long, value_parser, default_value = "/etc/aurae/pki/ca.crt.pem")]
+    #[clap(long, value_parser, default_value = "/etc/aurae/pki/ca.crt.pem")]
     ca_crt: String,
 
     #[clap(short, long, value_parser, default_value = AURAE_SOCK)]
