@@ -34,7 +34,7 @@ executable   ?=  auraed
 cargo         =  cargo +nightly
 
 compile: ## Compile for the local architecture ⚙
-	@$(cargo) build --debug
+	@$(cargo) build
 
 install:  ## Build and install (debug) 🎉
 	@echo "Installing..."
