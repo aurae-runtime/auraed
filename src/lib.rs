@@ -52,6 +52,8 @@ use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
+pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
+
 #[derive(Debug)]
 pub struct AuraedRuntime {
     // Root CA

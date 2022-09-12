@@ -41,7 +41,6 @@ use syslog::{BasicLogger, Facility, Formatter3164};
 
 const EXIT_OKAY: i32 = 0;
 const EXIT_ERROR: i32 = 1;
-const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 const AURAED_SYSLOG_NAME: &str = "auraed";
 
 #[derive(Parser, Debug)]
@@ -60,7 +59,7 @@ struct AuraedOptions {
     #[clap(long, value_parser, default_value = "/etc/aurae/pki/ca.crt.pem")]
     ca_crt: String,
 
-    #[clap(short, long, value_parser, default_value = AURAE_SOCK)]
+    #[clap(short, long, value_parser, default_value = auraed::AURAE_SOCK)]
     socket: String,
 
     #[clap(short, long)]
