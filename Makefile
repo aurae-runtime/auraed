@@ -32,9 +32,19 @@ all: compile
 
 executable   ?=  auraed
 cargo         =  cargo +nightly
+apibranch     =  main
 
-api: ## Download the api to the local directory
+.PHONY: api
+api: ## Download the api to the local directory [v1]
+	@git clone https://github.com/aurae-runtime/api.git api/.repo
+	cd api/.repo && git checkout $(apibranch) && git pull origin $(apibranch)
+	@cd api/.repo
+	mv -v api/.repo/v1/* api
 
+.PHONY: api
+cleanapi: ## Download the api to the local directory [v1]
+	@rm -rvf api/.repo
+	@rm -rvf api/*
 
 compile: ## Compile for the local architecture ⚙
 	@$(cargo) build
@@ -47,7 +57,7 @@ release: ## Build and install (release) 🎉
 	@echo "Installing..."
 	@$(cargo) install --path .
 
-clean: ## Clean your artifacts 🧼
+clean: cleanapi ## Clean your artifacts 🧼
 	@echo "Cleaning..."
 	@cargo clean
 	@rm -rvf target/*
