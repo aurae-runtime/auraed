@@ -36,12 +36,11 @@ apibranch     =  main
 
 .PHONY: api
 api: ## Download the api to the local directory [v1]
-	@git clone https://github.com/aurae-runtime/api.git api/.repo
+	@if [ ! -d api/.repo ]; then git clone https://github.com/aurae-runtime/api.git api/.repo; fi
 	cd api/.repo && git checkout $(apibranch) && git pull origin $(apibranch)
 	@cd api/.repo
-	mv -v api/.repo/v1/* api
+	cp -rv api/.repo/v* api # Move all versions [v*] up
 
-.PHONY: api
 cleanapi: ## Download the api to the local directory [v1]
 	@rm -rvf api/.repo
 	@rm -rvf api/*
@@ -49,7 +48,7 @@ cleanapi: ## Download the api to the local directory [v1]
 compile: ## Compile for the local architecture ⚙
 	@$(cargo) build
 
-install:  ## Build and install (debug) 🎉
+install: api ## Build and install (debug) 🎉
 	@echo "Installing..."
 	@$(cargo) install --debug --path .
 
