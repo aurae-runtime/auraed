@@ -33,6 +33,9 @@ all: compile
 executable   ?=  auraed
 cargo         =  cargo +nightly
 
+api: ## Download the api to the local directory
+
+
 compile: ## Compile for the local architecture ⚙
 	@$(cargo) build
 
