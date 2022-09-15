@@ -49,14 +49,14 @@ struct AuraedOptions {
     #[clap(
         long,
         value_parser,
-        default_value = "/etc/aurae/pki/_signed.server.crt.pem"
+        default_value = "/etc/aurae/pki/_signed.server.crt"
     )]
     server_crt: String,
 
-    #[clap(long, value_parser, default_value = "/etc/aurae/pki/server.key.pem")]
+    #[clap(long, value_parser, default_value = "/etc/aurae/pki/server.key")]
     server_key: String,
 
-    #[clap(long, value_parser, default_value = "/etc/aurae/pki/ca.crt.pem")]
+    #[clap(long, value_parser, default_value = "/etc/aurae/pki/ca.crt")]
     ca_crt: String,
 
     #[clap(short, long, value_parser, default_value = auraed::AURAE_SOCK)]
