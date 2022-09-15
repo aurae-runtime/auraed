@@ -89,7 +89,7 @@ impl AuraedRuntime {
         // Read more about Abstract Sockets: https://man7.org/linux/man-pages/man7/unix.7.html
         // TODO Consider this: https://docs.rs/nix/latest/nix/sys/socket/struct.UnixAddr.html#method.new_abstract
         // let addr = SocketAddr::from_abstract_namespace(b"aurae")?; // Linux only
-        // let addr = "[::1]:1234".parse().unwrap();
+        // let addr = "[::1]:1234".parse().unwrap();'
 
         let sock = UnixListener::bind(&self.socket)?;
         let sock_stream = UnixListenerStream::new(sock);
