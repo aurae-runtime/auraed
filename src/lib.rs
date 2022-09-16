@@ -80,9 +80,13 @@ impl AuraedRuntime {
         let ca_crt = Certificate::from_pem(ca_crt);
         info!("Register Server SSL Certificate Authority (CA)");
 
+        let mut roots = rustls::RootCertStore::empty();
+        roots.add(&rustls::Certificate(ca_crt.clone().into_inner()))?;
+
         let tls = ServerTlsConfig::new()
             .identity(server_identity)
             .client_ca_root(ca_crt);
+
         info!("Validating SSL Identity and Root Certificate Authority (CA)");
 
         // Aurae leverages Unix Abstract Sockets
