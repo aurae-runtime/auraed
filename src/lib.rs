@@ -37,7 +37,7 @@
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::path::PathBuf;
-use std::{fs, io, iter};
+use std::{fs, io};
 
 use anyhow::Context;
 use log::*;
