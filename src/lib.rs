@@ -34,23 +34,26 @@
 // #![feature(unix_socket_abstract)]
 // use std::os::unix::net::SocketAddr;
 
-mod meta;
-mod observe;
-mod runtime;
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::path::PathBuf;
+use std::{fs, io, iter};
+
+use anyhow::Context;
+use log::*;
+use rustls_pemfile::certs;
+use tokio::net::UnixListener;
+use tokio_stream::wrappers::UnixListenerStream;
+use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
 use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
 use crate::runtime::local_runtime_server::LocalRuntimeServer;
 use crate::runtime::LocalRuntimeService;
 
-use log::*;
-use std::fs;
-use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
-use std::path::PathBuf;
-use tokio::net::UnixListener;
-use tokio_stream::wrappers::UnixListenerStream;
-use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
+mod meta;
+mod observe;
+mod runtime;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 
@@ -68,24 +71,40 @@ impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         // Manage the socket permission/groups first\
         let _ = fs::remove_file(&self.socket);
-        tokio::fs::create_dir_all(Path::new(&self.socket).parent().unwrap()).await?;
+        tokio::fs::create_dir_all(Path::new(&self.socket).parent().unwrap())
+            .await
+            .with_context(|| {
+                format!(
+                    "Failed to create directory for socket: {}",
+                    self.socket.display()
+                )
+            })?;
         trace!("{:#?}", self);
 
-        let server_crt = tokio::fs::read(&self.server_crt).await?;
+        let server_crt = tokio::fs::read(&self.server_crt).await.with_context(|| {
+            format!(
+                "Failed to read server certificate: {}",
+                self.server_crt.display()
+            )
+        })?;
         let server_key = tokio::fs::read(&self.server_key).await?;
         let server_identity = Identity::from_pem(server_crt, server_key);
         info!("Register Server SSL Identity");
 
-        let ca_crt = tokio::fs::read(&self.ca_crt).await?;
-        let ca_crt = Certificate::from_pem(ca_crt);
-        info!("Register Server SSL Certificate Authority (CA)");
-
         let mut roots = rustls::RootCertStore::empty();
-        roots.add(&rustls::Certificate(ca_crt.clone().into_inner()))?;
+
+        let ca_crt = tokio::fs::read(&self.ca_crt).await?;
+        let ca_crt_pem = Certificate::from_pem(ca_crt.clone());
+        let mut cursor = io::Cursor::new(ca_crt.clone());
+        let certs = certs(&mut cursor)?;
+        let ca_crt_der = certs
+            .first()
+            .ok_or(anyhow::anyhow!("No CA certificate found"))?;
+        roots.add(&rustls::Certificate(ca_crt_der.clone()))?;
 
         let tls = ServerTlsConfig::new()
             .identity(server_identity)
-            .client_ca_root(ca_crt);
+            .client_ca_root(ca_crt_pem);
 
         info!("Validating SSL Identity and Root Certificate Authority (CA)");
 
