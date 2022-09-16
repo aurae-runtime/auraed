@@ -44,12 +44,21 @@ log = "0.4.17"
 multi_log = "0.1.2"
 simplelog = "0.12.0"
 syslog = "6.0.1"
+rustls = { version = "0.20.6", features = ["logging"]}
+rustls-pemfile = "1.0.1"
+tokio-rustls = "0.23.4"
 tonic = { version = "0.8", features = ["tls", "tls-roots"] }
+tower = "0.4.13"
 prost = "0.11"
-tokio-stream = { version = "0.1", features = ["net"] }
+#tokio-stream = { version = "0.1", features = ["net"] }
+tokio-stream = { version = "0.1.9", features = ["net", "default"] }
 tokio = { version = "1.0", features = ["macros", "fs", "rt-multi-thread"] }
 futures = "0.3.23"
 h2 = "0.3.13"
+webpki = "0.22.0"
+
+[patch.crates-io]
+webpki = { path = "../webpki" }
 
 
 [build-dependencies]

@@ -91,16 +91,16 @@ async fn daemon() -> i32 {
     };
 
     // Initialize the logger
-    let logger_simple =
-        simplelog::SimpleLogger::new(logger_level.to_level_filter(), simplelog::Config::default());
-    let logger_syslog = syslog::unix(formatter).unwrap();
-    let _ = match multi_log::MultiLogger::init(
-        vec![logger_simple, Box::new(BasicLogger::new(logger_syslog))],
-        logger_level,
-    ) {
-        Ok(_) => {}
-        Err(e) => panic!("unable to connect to syslog: {:?}", e),
-    };
+    //let logger_simple =
+    //    simplelog::SimpleLogger::new(logger_level.to_level_filter(), simplelog::Config::default());
+    //let logger_syslog = syslog::unix(formatter).unwrap();
+    //let _ = match multi_log::MultiLogger::init(
+    //    vec![logger_simple, Box::new(BasicLogger::new(logger_syslog))],
+    //    logger_level,
+    //) {
+    //    Ok(_) => {}
+    //    Err(e) => panic!("unable to connect to syslog: {:?}", e),
+    //};
 
     trace!("**Logging: Verbose Mode**");
     info!("Starting Aurae Daemon Runtime...");
