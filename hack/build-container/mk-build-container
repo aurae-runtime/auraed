@@ -1,0 +1,6 @@
+#!/bin/bash
+
+docker rmi aurae-builder
+
+set -e
+docker build . -t aurae-builder
