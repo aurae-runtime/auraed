@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+workingDir=$(mktemp -d)
+thisDir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+function clean {
+    rm -rf $workingDir
+}
+trap clean EXIT
+
+source config.sh
+
+pushd $workingDir
+
+echo "Downloading Linux Kernel $KERNEL_VERSION"
+wget -qO- --show-progress "https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.xz" |
+    tar xJ
+cp "$thisDir/config/$KERNEL_CONFIG" linux-${KERNEL_VERSION}/.config
+pushd linux-${KERNEL_VERSION}
+make menuconfig
+
+popd # linux src
+
+cp linux-${KERNEL_VERSION}/.config "$thisDir/config/$KERNEL_CONFIG"
+
+popd # working dir

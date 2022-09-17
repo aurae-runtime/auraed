@@ -28,6 +28,8 @@
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
+include hack/hack.mk
+
 all: compile
 
 executable   ?=  auraed
@@ -50,7 +52,7 @@ test: ## Run the tests
 	#@$(cargo) test -- --nocapture # Full output
 
 
-clean: cleanapi ## Clean your artifacts 🧼
+clean: ## Clean your artifacts 🧼
 	@echo "Cleaning..."
 	@cargo clean
 	@rm -rvf target/*
