@@ -30,31 +30,31 @@
 
 tonic::include_proto!("runtime");
 
-use crate::runtime::local_runtime_server::LocalRuntime;
-use tonic::{Request, Response, Status};
-
-#[derive(Debug, Default, Clone)]
-pub struct LocalRuntimeService {}
-
-#[tonic::async_trait]
-impl LocalRuntime for LocalRuntimeService {
-    /// RunProcess is modelled off systemd "ExecStart" which calls fork(2)
-    async fn run_process(
-        &self,
-        _request: Request<RunProcessRequest>,
-    ) -> Result<Response<RunProcessResponse>, Status> {
-        todo!()
-    }
-    async fn read_stdout(
-        &self,
-        _request: Request<ReadStdoutRequest>,
-    ) -> Result<Response<ReadStdoutResponse>, Status> {
-        todo!()
-    }
-    async fn read_stderr(
-        &self,
-        _request: Request<ReadStderrRequest>,
-    ) -> Result<Response<ReadStderrResponse>, Status> {
-        todo!()
-    }
-}
+// use crate::runtime::local_runtime_server::LocalRuntime;
+// use tonic::{Request, Response, Status};
+// //
+// #[derive(Debug, Default, Clone)]
+// pub struct LocalRuntimeService {}
+//
+// #[tonic::async_trait]
+// impl LocalRuntime for LocalRuntimeService {
+//     /// RunProcess is modelled off systemd "ExecStart" which calls fork(2)
+//     async fn run_process(
+//         &self,
+//         _request: Request<RunProcessRequest>,
+//     ) -> Result<Response<RunProcessResponse>, Status> {
+//         todo!()
+//     }
+//     async fn read_stdout(
+//         &self,
+//         _request: Request<ReadStdoutRequest>,
+//     ) -> Result<Response<ReadStdoutResponse>, Status> {
+//         todo!()
+//     }
+//     async fn read_stderr(
+//         &self,
+//         _request: Request<ReadStderrRequest>,
+//     ) -> Result<Response<ReadStderrResponse>, Status> {
+//         todo!()
+//     }
+// }
