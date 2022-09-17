@@ -34,14 +34,13 @@
 // #![feature(unix_socket_abstract)]
 // use std::os::unix::net::SocketAddr;
 
+use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::path::PathBuf;
-use std::{fs, io};
 
 use anyhow::Context;
 use log::*;
-use rustls_pemfile::certs;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
@@ -91,16 +90,8 @@ impl AuraedRuntime {
         let server_identity = Identity::from_pem(server_crt, server_key);
         info!("Register Server SSL Identity");
 
-        let mut roots = rustls::RootCertStore::empty();
-
         let ca_crt = tokio::fs::read(&self.ca_crt).await?;
         let ca_crt_pem = Certificate::from_pem(ca_crt.clone());
-        let mut cursor = io::Cursor::new(ca_crt.clone());
-        let certs = certs(&mut cursor)?;
-        let ca_crt_der = certs
-            .first()
-            .ok_or(anyhow::anyhow!("No CA certificate found"))?;
-        roots.add(&rustls::Certificate(ca_crt_der.clone()))?;
 
         let tls = ServerTlsConfig::new()
             .identity(server_identity)
