@@ -108,12 +108,6 @@ impl AuraedRuntime {
 
         info!("Validating SSL Identity and Root Certificate Authority (CA)");
 
-        // Aurae leverages Unix Abstract Sockets
-        // Read more about Abstract Sockets: https://man7.org/linux/man-pages/man7/unix.7.html
-        // TODO Consider this: https://docs.rs/nix/latest/nix/sys/socket/struct.UnixAddr.html#method.new_abstract
-        // let addr = SocketAddr::from_abstract_namespace(b"aurae")?; // Linux only
-        // let addr = "[::1]:1234".parse().unwrap();'
-
         let sock = UnixListener::bind(&self.socket)?;
         let sock_stream = UnixListenerStream::new(sock);
 
@@ -138,8 +132,17 @@ impl AuraedRuntime {
         );
 
         // Event loop
-        // let _ = join!(handle);
         let _ = handle.await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_socket_path() {
+        assert_eq!(AURAE_SOCK, "/var/run/aurae/aurae.sock");
     }
 }

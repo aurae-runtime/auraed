@@ -45,6 +45,11 @@ release: ## Build and install (release) 🎉
 	@echo "Installing..."
 	@$(cargo) install --path .
 
+test: ## Run the tests
+	@$(cargo) test                # Tidy output
+	#@$(cargo) test -- --nocapture # Full output
+
+
 clean: cleanapi ## Clean your artifacts 🧼
 	@echo "Cleaning..."
 	@cargo clean
