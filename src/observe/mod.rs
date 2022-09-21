@@ -57,10 +57,7 @@ impl Observe for ObserveService {
             code: CODE_UNKNOWN,
             message: MESSAGE_UNKNOWN.into(),
         });
-        let response = StatusResponse {
-            meta,
-            state: STATUS_UNKNOWN.into(),
-        };
+        let response = StatusResponse { meta, state: STATUS_UNKNOWN.into() };
         Ok(Response::new(response))
     }
 }
