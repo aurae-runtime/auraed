@@ -28,6 +28,8 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
+#![warn(clippy::unwrap_used)]
+
 use auraed::*;
 use clap::Parser;
 use log::*;
@@ -76,11 +78,7 @@ async fn daemon() -> i32 {
     // Normal mode: Info, Warn, Error
     // Verbose mode: Debug, Trace, Info, Warn, Error
     // let logger_level = if matches.is_present("verbose") {
-    let logger_level = if options.verbose {
-        Level::Trace
-    } else {
-        Level::Info
-    };
+    let logger_level = if options.verbose { Level::Trace } else { Level::Info };
 
     // Syslog formatter
     let formatter = Formatter3164 {
@@ -91,10 +89,12 @@ async fn daemon() -> i32 {
     };
 
     // Initialize the logger
-    let logger_simple =
-        simplelog::SimpleLogger::new(logger_level.to_level_filter(), simplelog::Config::default());
+    let logger_simple = simplelog::SimpleLogger::new(
+        logger_level.to_level_filter(),
+        simplelog::Config::default(),
+    );
     let logger_syslog = syslog::unix(formatter).unwrap();
-    let _ = match multi_log::MultiLogger::init(
+    match multi_log::MultiLogger::init(
         vec![logger_simple, Box::new(BasicLogger::new(logger_syslog))],
         logger_level,
     ) {

@@ -37,6 +37,7 @@ cargo         =  cargo
 branch       ?=  main
 
 compile: ## Compile for the local architecture ⚙
+	@$(cargo) clippy
 	@$(cargo) build
 
 install: ## Build and install (debug) 🎉
