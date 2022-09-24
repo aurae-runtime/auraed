@@ -108,7 +108,7 @@ impl AuraedRuntime {
             Server::builder()
                 .tls_config(tls)?
                 //.add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
-                .add_service(ObserveServer::new(ObserveService::default()))
+                .add_service(ObserveServer::new(ObserveService {}))
                 .serve_with_incoming(sock_stream)
                 .await
         });
@@ -124,6 +124,7 @@ impl AuraedRuntime {
 
         // Event loop
         let res = handle.await.unwrap();
+
         info!("{:?}", res);
         Ok(())
     }
