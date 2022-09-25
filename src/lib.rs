@@ -50,6 +50,7 @@ use crate::observe::ObserveService;
 // use crate::runtime::local_runtime_server::LocalRuntimeServer;
 // use crate::runtime::LocalRuntimeService;
 
+mod codes;
 mod meta;
 mod observe;
 mod runtime;
@@ -63,7 +64,7 @@ pub struct AuraedRuntime {
 
     pub server_crt: PathBuf,
     pub server_key: PathBuf,
-    pub socket: PathBuf, // TODO replace with namespace
+    pub socket: PathBuf,
 }
 
 impl AuraedRuntime {
@@ -80,12 +81,13 @@ impl AuraedRuntime {
             })?;
         trace!("{:#?}", self);
 
-        let server_crt = tokio::fs::read(&self.server_crt).await.with_context(|| {
-            format!(
-                "Failed to read server certificate: {}",
-                self.server_crt.display()
-            )
-        })?;
+        let server_crt =
+            tokio::fs::read(&self.server_crt).await.with_context(|| {
+                format!(
+                    "Failed to read server certificate: {}",
+                    self.server_crt.display()
+                )
+            })?;
         let server_key = tokio::fs::read(&self.server_key).await?;
         let server_identity = Identity::from_pem(server_crt, server_key);
         info!("Register Server SSL Identity");
@@ -103,27 +105,28 @@ impl AuraedRuntime {
         let sock_stream = UnixListenerStream::new(sock);
 
         // Run the server concurrently
-        let handle = tokio::spawn(
+        let handle = tokio::spawn(async {
             Server::builder()
                 .tls_config(tls)?
                 //.add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
                 .add_service(ObserveServer::new(ObserveService::default()))
-                .serve_with_incoming(sock_stream),
-        );
+                .serve_with_incoming(sock_stream)
+                .await
+        });
 
         trace!("Setting socket mode {} -> 766", &self.socket.display());
 
         // We set the mode to 766 for the Unix domain socket.
         // This is what allows non-root users to dial the socket
         // and authenticate with mTLS.
-        fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766)).unwrap();
-        info!(
-            "Non-root User Access Socket Created: {}",
-            self.socket.display()
-        );
+        fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766))
+            .unwrap();
+        info!("Non-root User Access Socket Created: {}", self.socket.display());
 
         // Event loop
-        let _ = handle.await?;
+        let res = handle.await.unwrap();
+
+        info!("{:?}", res);
         Ok(())
     }
 }

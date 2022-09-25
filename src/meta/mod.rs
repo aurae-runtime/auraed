@@ -29,9 +29,3 @@
 \* -------------------------------------------------------------------------- */
 
 tonic::include_proto!("meta");
-
-// Messages
-pub const MESSAGE_UNKNOWN: &str = "UNKNOWN";
-
-// Response Codes
-pub const CODE_UNKNOWN: i32 = 1;
