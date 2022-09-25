@@ -34,6 +34,7 @@ tonic::include_proto!("meta");
 use crate::meta; //  For AuraeMeta type
 use crate::meta::*;
 use crate::observe::observe_server::Observe;
+use tonic::transport::server::UdsConnectInfo;
 use tonic::{Request, Response, Status};
 
 #[allow(dead_code)]
@@ -50,8 +51,10 @@ pub struct ObserveService {}
 impl Observe for ObserveService {
     async fn status(
         &self,
-        _request: Request<StatusRequest>,
+        request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, Status> {
+        let conn_info = request.extensions().get::<UdsConnectInfo>().unwrap();
+        println!("Got a request {:?} with info {:?}", request, conn_info);
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
             code: CODE_UNKNOWN,

@@ -108,7 +108,7 @@ impl AuraedRuntime {
             Server::builder()
                 .tls_config(tls)?
                 //.add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
-                .add_service(ObserveServer::new(ObserveService {}))
+                .add_service(ObserveServer::new(ObserveService::default()))
                 .serve_with_incoming(sock_stream)
                 .await
         });
