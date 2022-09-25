@@ -50,6 +50,7 @@ use crate::observe::ObserveService;
 // use crate::runtime::local_runtime_server::LocalRuntimeServer;
 // use crate::runtime::LocalRuntimeService;
 
+mod codes;
 mod meta;
 mod observe;
 mod runtime;
@@ -63,7 +64,7 @@ pub struct AuraedRuntime {
 
     pub server_crt: PathBuf,
     pub server_key: PathBuf,
-    pub socket: PathBuf, // TODO replace with namespace
+    pub socket: PathBuf,
 }
 
 impl AuraedRuntime {

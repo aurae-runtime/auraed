@@ -28,29 +28,16 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-tonic::include_proto!("observe");
-tonic::include_proto!("meta");
+#![allow(dead_code)]
 
-use crate::codes::*;
-use crate::meta;
-use crate::observe::observe_server::Observe;
-use tonic::{Request, Response, Status};
+pub const STATUS_UNKNOWN: &str = "Unknown";
+pub const STATUS_READY: &str = "Ready";
+pub const STATUS_ERROR: &str = "Error";
 
-#[derive(Debug, Default, Clone)]
-pub struct ObserveService {}
+pub const STATE_ACTIVE: &str = "Active";
+pub const STATE_INACTIVE: &str = "Inactive";
 
-#[tonic::async_trait]
-impl Observe for ObserveService {
-    async fn status(
-        &self,
-        _request: Request<StatusRequest>,
-    ) -> Result<Response<StatusResponse>, Status> {
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        });
-        let response = StatusResponse { meta, state: STATE_ACTIVE.into() };
-        Ok(Response::new(response))
-    }
-}
+pub const MESSAGE_UNKNOWN: &str = "UNKNOWN";
+
+pub const CODE_SUCCESS: i32 = 0;
+pub const CODE_UNKNOWN: i32 = 1;
