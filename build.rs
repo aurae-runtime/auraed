@@ -35,13 +35,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //Command::new("make").args(&["command"]).status().unwrap();
 
     // gRPC
-    tonic_build::configure().compile(
-        &[
-            "../api/v1/meta.proto",
-            "../api/v1/runtime.proto",
-            "../api/v1/observe.proto",
-        ],
-        &["../api/v1"],
-    )?;
+    tonic_build::configure()
+        .type_attribute(
+            "meta.AuraeMeta",
+            "#[allow(clippy::derive_partial_eq_without_eq)]",
+        )
+        .compile(
+            &[
+                "../api/v1/meta.proto",
+                "../api/v1/runtime.proto",
+                "../api/v1/observe.proto",
+            ],
+            &["../api/v1"],
+        )?;
     Ok(())
 }
