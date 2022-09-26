@@ -121,7 +121,7 @@ impl AuraedRuntime {
         // and authenticate with mTLS.
         fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766))
             .unwrap();
-        info!("Non-root User Access Socket Created: {}", self.socket.display());
+        info!("User Access Socket Created: {}", self.socket.display());
 
         // Event loop
         let res = handle.await.unwrap();
