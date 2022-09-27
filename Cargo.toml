@@ -57,7 +57,7 @@ walkdir = "2"
 sea-orm = { version = "^0.9.0", features = [ "sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
 libc = "0.2"
 walkdir = "2"
-sea-orm = { version = "^0.9.0", features = [ "sqlx-sqlite", "runtime-async-std-native-tls", "macros" ] }
+sea-orm = { version = "^0.9.0", features = [ "sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
 
 [build-dependencies]
 tonic-build = "0.8"

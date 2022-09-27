@@ -145,6 +145,8 @@ impl AuraedRuntime {
         )));
 
         // Pragma initial connection
+        let mut opt = ConnectOptions::new("sqlite::memory:".to_owned());
+        opt.sqlx_logging(false); // TODO add sqlcipher_key
         let db = Database::connect(opt).await?;
         let x = db
             .execute(Statement::from_string(
