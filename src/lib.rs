@@ -34,17 +34,21 @@
 // #![feature(unix_socket_abstract)]
 // use std::os::unix::net::SocketAddr;
 
-use std::fs;
-use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
-use std::path::PathBuf;
-
+use anyhow::Context;
 use anyhow::Context;
 use init::init_pid1_logging;
 use init::init_rootfs;
 use init::init_syslog_logging;
 use init::print_logo;
 use log::*;
+use log::*;
+use sea_orm::ConnectionTrait;
+use sea_orm::Database;
+use sea_orm::Statement;
+use std::fs;
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::path::PathBuf;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
@@ -127,6 +131,16 @@ impl AuraedRuntime {
         fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766))
             .unwrap();
         info!("User Access Socket Created: {}", self.socket.display());
+
+        // SQLite
+        let db = Database::connect("sqlite::memory:").await?;
+        let x = db
+            .execute(Statement::from_string(
+                db.get_database_backend(),
+                format!("PRAGMA database_list;"),
+            ))
+            .await?;
+        info!("Initializing: SQLite: {:?}", x);
 
         // Event loop
         let res = handle.await.unwrap();
