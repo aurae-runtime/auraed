@@ -45,64 +45,62 @@ impl Runtime for RuntimeService {
         &self,
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
+        let r = req.into_inner();
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
         });
-        let response = ExecutableStatus {
-            meta,
-            state: STATE_ACTIVE.into(),
-            name: req.into_inner().name,
-        };
+        let response =
+            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
     }
     async fn stop_executable(
         &self,
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
+        let r = req.into_inner();
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
         });
-        let response = ExecutableStatus {
-            meta,
-            state: STATE_ACTIVE.into(),
-            name: req.into_inner().name,
-        };
+        let response =
+            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
     }
     async fn register_executable(
         &self,
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
+        let r = req.into_inner();
+        // let tree = sled::open(DATABASE_TREE).expect("open");
+        // let runtimedb = tree.open_tree(b"runtime").unwrap();
+        // let mut record = vec![];
+        // record.extend_from_slice(b"register");
+        // record.extend_from_slice(r.as_bytes());
+        //runtimedb.insert(r.name, record).unwrap();
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
         });
-        let response = ExecutableStatus {
-            meta,
-            state: STATE_ACTIVE.into(),
-            name: req.into_inner().name,
-        };
+        let response =
+            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
     }
     async fn destroy_executable(
         &self,
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
+        let r = req.into_inner();
         let mut meta = Vec::new();
         meta.push(meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
         });
-        let response = ExecutableStatus {
-            meta,
-            state: STATE_ACTIVE.into(),
-            name: req.into_inner().name,
-        };
+        let response =
+            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
     }
 }

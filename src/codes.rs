@@ -30,6 +30,8 @@
 
 #![allow(dead_code)]
 
+pub const DATABASE_TREE: &str = "/.aurae";
+
 pub const STATUS_UNKNOWN: &str = "Unknown";
 pub const STATUS_READY: &str = "Ready";
 pub const STATUS_ERROR: &str = "Error";
