@@ -42,6 +42,7 @@ use init::init_syslog_logging;
 use init::print_logo;
 use log::*;
 use log::*;
+use sea_orm::ConnectOptions;
 use sea_orm::ConnectionTrait;
 use sea_orm::Database;
 use sea_orm::Statement;
@@ -133,7 +134,9 @@ impl AuraedRuntime {
         info!("User Access Socket Created: {}", self.socket.display());
 
         // SQLite
-        let db = Database::connect("sqlite::memory:").await?;
+        let mut opt = ConnectOptions::new("sqlite::memory:".to_owned());
+        opt.sqlx_logging(false); // TODO add sqlcipher_key
+        let db = Database::connect(opt).await?;
         let x = db
             .execute(Statement::from_string(
                 db.get_database_backend(),
