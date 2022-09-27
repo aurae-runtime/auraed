@@ -154,7 +154,7 @@ impl AuraedRuntime {
             .await?;
         info!("Initializing: SQLite: {:?}", x);
 
-        runtime::hydrate(&db).await?;
+        //runtime::hydrate(&db).await?;
 
         // Event loop
         let res = handle.await.unwrap();
