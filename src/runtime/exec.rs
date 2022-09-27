@@ -28,81 +28,67 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-tonic::include_proto!("runtime");
-tonic::include_proto!("meta");
+use anyhow::anyhow;
+use std::process::Child;
 
-pub mod exec;
+// Spawn is a child process of Auraed.
+//
+// Spawn:
+// Executes the command as a child process, returning a handle to it.
+// By default, stdin, stdout and stderr are inherited from the parent.
+pub struct Spawn {
+    pub process: Child,
+}
 
-use crate::codes::*;
-use crate::meta;
-use crate::runtime::runtime_server::Runtime;
-use tonic::{Request, Response, Status};
+use std::process::Command;
 
-#[derive(Debug, Default, Clone)]
-pub struct RuntimeService {}
-
-#[tonic::async_trait]
-impl Runtime for RuntimeService {
-    async fn start_executable(
-        &self,
-        req: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
-        let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        });
-        let response =
-            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
-        Ok(Response::new(response))
+pub fn exec(cmd: &str) -> Result<Spawn, anyhow::Error> {
+    let spl = cmd.split(" ");
+    let ents: Vec<&str> = spl.collect();
+    if ents.len() < 1 {
+        return Err(anyhow!("empty argument command string"));
     }
-    async fn stop_executable(
-        &self,
-        req: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
-        let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        });
-        let response =
-            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
-        Ok(Response::new(response))
+
+    // Build the base command ents[0]
+    let mut x = Command::new(ents[0].clone());
+    let c = ents[0].clone();
+
+    // Add arguments if they exist
+    if ents.len() > 1 {
+        for ent in ents {
+            if ent == c {
+                continue;
+            }
+            x.arg(ent);
+        }
     }
-    async fn register_executable(
-        &self,
-        req: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
-        let r = req.into_inner();
-        // let tree = sled::open(DATABASE_TREE).expect("open");
-        // let runtimedb = tree.open_tree(b"runtime").unwrap();
-        // let mut record = vec![];
-        // record.extend_from_slice(b"register");
-        // record.extend_from_slice(r.as_bytes());
-        //runtimedb.insert(r.name, record).unwrap();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        });
-        let response =
-            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
-        Ok(Response::new(response))
-    }
-    async fn destroy_executable(
-        &self,
-        req: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
-        let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        });
-        let response =
-            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
-        Ok(Response::new(response))
+
+    // Spawn
+    // Executes the command as a child process, returning a handle to it.
+    // By default, stdin, stdout and stderr are inherited from the parent.
+    let child = x.spawn()?;
+    let spawn = Spawn { process: child };
+    Ok(spawn)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_commands_exec() {
+        // test_exec will test "concurrent" processes
+        // each of these spawn and return before exiting
+        let spawn1 = exec("touch /tmp/.aurae.testfile");
+        assert!(spawn1.is_ok());
+
+        let spawn2 = exec("cat /tmp/.aurae.testfile");
+        assert!(spawn2.is_ok());
+
+        let spawn3 = exec("this-is-a-known-bad-command-executable");
+        assert!(spawn3.is_err());
+
+        let spawn4 = exec(""); // empty arguments should fail
+        assert!(spawn4.is_err());
     }
 }
