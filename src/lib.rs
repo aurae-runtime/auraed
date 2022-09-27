@@ -46,6 +46,7 @@ use sea_orm::ConnectOptions;
 use sea_orm::ConnectionTrait;
 use sea_orm::Database;
 use sea_orm::Statement;
+use std::borrow::Cow;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
@@ -99,6 +100,7 @@ impl AuraedRuntime {
                 )
             })?;
         let server_key = tokio::fs::read(&self.server_key).await?;
+        let db_key = server_key.clone();
         let server_identity = Identity::from_pem(server_crt, server_key);
         info!("Register Server SSL Identity");
 
@@ -135,7 +137,10 @@ impl AuraedRuntime {
 
         // SQLite
         let mut opt = ConnectOptions::new("sqlite::memory:".to_owned());
-        opt.sqlx_logging(false); // TODO add sqlcipher_key
+        opt.sqlx_logging(false).sqlcipher_key(Cow::from(format!(
+            "{:?}",
+            db_key.to_ascii_lowercase()
+        )));
         let db = Database::connect(opt).await?;
         let x = db
             .execute(Statement::from_string(
@@ -143,6 +148,8 @@ impl AuraedRuntime {
                 format!("PRAGMA database_list;"),
             ))
             .await?;
+
+        info!("Unlocking SQLite Database with Key: {:?}", self.server_key);
         info!("Initializing: SQLite: {:?}", x);
 
         // Event loop
