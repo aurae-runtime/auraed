@@ -51,8 +51,8 @@ use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
 use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
-// use crate::runtime::local_runtime_server::LocalRuntimeServer;
-// use crate::runtime::LocalRuntimeService;
+use crate::runtime::runtime_server::RuntimeServer;
+use crate::runtime::RuntimeService;
 
 mod codes;
 mod init;
@@ -113,7 +113,7 @@ impl AuraedRuntime {
         let handle = tokio::spawn(async {
             Server::builder()
                 .tls_config(tls)?
-                //.add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
+                .add_service(RuntimeServer::new(RuntimeService::default()))
                 .add_service(ObserveServer::new(ObserveService::default()))
                 .serve_with_incoming(sock_stream)
                 .await

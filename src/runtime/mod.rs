@@ -29,32 +29,80 @@
 \* -------------------------------------------------------------------------- */
 
 tonic::include_proto!("runtime");
+tonic::include_proto!("meta");
 
-// use crate::runtime::local_runtime_server::LocalRuntime;
-// use tonic::{Request, Response, Status};
-// //
-// #[derive(Debug, Default, Clone)]
-// pub struct LocalRuntimeService {}
-//
-// #[tonic::async_trait]
-// impl LocalRuntime for LocalRuntimeService {
-//     /// RunProcess is modelled off systemd "ExecStart" which calls fork(2)
-//     async fn run_process(
-//         &self,
-//         _request: Request<RunProcessRequest>,
-//     ) -> Result<Response<RunProcessResponse>, Status> {
-//         todo!()
-//     }
-//     async fn read_stdout(
-//         &self,
-//         _request: Request<ReadStdoutRequest>,
-//     ) -> Result<Response<ReadStdoutResponse>, Status> {
-//         todo!()
-//     }
-//     async fn read_stderr(
-//         &self,
-//         _request: Request<ReadStderrRequest>,
-//     ) -> Result<Response<ReadStderrResponse>, Status> {
-//         todo!()
-//     }
-// }
+use crate::codes::*;
+use crate::meta;
+use crate::runtime::runtime_server::Runtime;
+use tonic::{Request, Response, Status};
+
+#[derive(Debug, Default, Clone)]
+pub struct RuntimeService {}
+
+#[tonic::async_trait]
+impl Runtime for RuntimeService {
+    async fn start_executable(
+        &self,
+        req: Request<Executable>,
+    ) -> Result<Response<ExecutableStatus>, Status> {
+        let mut meta = Vec::new();
+        meta.push(meta::AuraeMeta {
+            code: CODE_SUCCESS,
+            message: STATUS_READY.into(),
+        });
+        let response = ExecutableStatus {
+            meta,
+            state: STATE_ACTIVE.into(),
+            name: req.into_inner().name,
+        };
+        Ok(Response::new(response))
+    }
+    async fn stop_executable(
+        &self,
+        req: Request<Executable>,
+    ) -> Result<Response<ExecutableStatus>, Status> {
+        let mut meta = Vec::new();
+        meta.push(meta::AuraeMeta {
+            code: CODE_SUCCESS,
+            message: STATUS_READY.into(),
+        });
+        let response = ExecutableStatus {
+            meta,
+            state: STATE_ACTIVE.into(),
+            name: req.into_inner().name,
+        };
+        Ok(Response::new(response))
+    }
+    async fn register_executable(
+        &self,
+        req: Request<Executable>,
+    ) -> Result<Response<ExecutableStatus>, Status> {
+        let mut meta = Vec::new();
+        meta.push(meta::AuraeMeta {
+            code: CODE_SUCCESS,
+            message: STATUS_READY.into(),
+        });
+        let response = ExecutableStatus {
+            meta,
+            state: STATE_ACTIVE.into(),
+            name: req.into_inner().name,
+        };
+        Ok(Response::new(response))
+    }
+    async fn destroy_executable(
+        &self,
+        req: Request<Executable>,
+    ) -> Result<Response<ExecutableStatus>, Status> {
+        let mut meta = Vec::new();
+        meta.push(meta::AuraeMeta {
+            code: CODE_SUCCESS,
+            message: STATUS_READY.into(),
+        });
+        let response = ExecutableStatus {
+            meta,
+            state: STATE_ACTIVE.into(),
+            name: req.into_inner().name,
+        };
+        Ok(Response::new(response))
+    }
+}
