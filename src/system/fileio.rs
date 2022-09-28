@@ -29,19 +29,3 @@ pub fn show_dir(dir: &str, recurse: bool) {
         }
     }
 }
-
-#[allow(dead_code)]
-fn write_file(file_path: &str, content: &str) {
-    unsafe {
-        let fp: *mut libc::FILE = libc::fopen(
-            String::from(file_path).as_bytes().as_ptr() as *const i8,
-            String::from("w").as_bytes().as_ptr() as *const i8,
-        );
-
-        libc::fprintf(
-            fp,
-            String::from(content).as_bytes().as_ptr() as *const i8,
-        );
-        libc::fclose(fp);
-    }
-}
