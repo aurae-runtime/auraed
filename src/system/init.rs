@@ -41,7 +41,7 @@ pub fn init_rootfs() {
     mount_vfs("proc", "/proc", "proc");
 }
 
-pub fn init_local_logging(logger_level: Level) {
+pub fn init_syslog_logging(logger_level: Level) {
     // Syslog formatter
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
