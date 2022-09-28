@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 build-container:
 	cd hack/build-container && ./mk-build-container
 	mkdir -p target
@@ -15,7 +17,9 @@ menuconfig:
 
 initramfs: container-release
 	mkdir -p target/rootfs/bin
+	mkdir -p target/rootfs/etc/aurae
 	cp target/release/auraed target/rootfs/bin/auraed
+	cp -r ../pki target/rootfs/etc/aurae/
 	cd target/rootfs && rm -f init && ln -s bin/auraed init
 	docker run -it --rm -u $${UID} -v "`pwd`:/aurae" aurae-builder bash -c "cd hack/initramfs && ./mk-initramfs"
 
