@@ -136,11 +136,16 @@ impl AuraedRuntime {
         info!("User Access Socket Created: {}", self.socket.display());
 
         // SQLite
-        let mut opt = ConnectOptions::new("sqlite::memory:".to_owned());
+        info!("Database Location:  /var/lib/aurae.db");
+        info!("Unlocking SQLite Database with Key: {:?}", self.server_key);
+        let mut opt =
+            ConnectOptions::new("sqlite:/var/lib/aurae.db".to_owned());
         opt.sqlx_logging(false).sqlcipher_key(Cow::from(format!(
             "{:?}",
             db_key.to_ascii_lowercase()
         )));
+
+        // Pragma initial connection
         let db = Database::connect(opt).await?;
         let x = db
             .execute(Statement::from_string(
@@ -148,9 +153,9 @@ impl AuraedRuntime {
                 format!("PRAGMA database_list;"),
             ))
             .await?;
-
-        info!("Unlocking SQLite Database with Key: {:?}", self.server_key);
         info!("Initializing: SQLite: {:?}", x);
+
+        runtime::hydrate(&db).await?;
 
         // Event loop
         let res = handle.await.unwrap();
