@@ -35,12 +35,10 @@
 // use std::os::unix::net::SocketAddr;
 
 use anyhow::Context;
-use anyhow::Context;
 use init::init_pid1_logging;
 use init::init_rootfs;
 use init::init_syslog_logging;
 use init::print_logo;
-use log::*;
 use log::*;
 use sea_orm::ConnectOptions;
 use sea_orm::ConnectionTrait;
@@ -51,6 +49,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::path::PathBuf;
+use system::{init::*, *};
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
@@ -65,6 +64,7 @@ mod init;
 mod meta;
 mod observe;
 mod runtime;
+mod system;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 
@@ -192,11 +192,15 @@ impl SystemRuntime {
         init_syslog_logging(self.logger_level);
     }
 
+    fn init_local(&self) {
+        system::init::init_local_logging(self.logger_level);
+    }
+
     pub fn init(&self) {
-        if init::get_pid() == 1 {
+        if system::get_pid() == 1 {
             self.init_pid1();
         } else {
-            self.init_pid_gt_1();
+            self.init_local();
         }
     }
 }
