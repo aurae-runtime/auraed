@@ -41,6 +41,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use log::*;
+use system::{init::*, *};
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
@@ -54,6 +55,7 @@ mod codes;
 mod meta;
 mod observe;
 mod runtime;
+mod system;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 
@@ -128,6 +130,42 @@ impl AuraedRuntime {
 
         info!("{:?}", res);
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct SystemRuntime {
+    pub logger_level: Level,
+}
+
+impl SystemRuntime {
+    fn init_pid1(&self) {
+        print_logo();
+
+        init_pid1_logging(self.logger_level);
+
+        init_rootfs();
+
+        // Show content of file-based kernel interface directories
+        //fileio::show_dir("/dev", false);
+        //fileio::show_dir("/sys", false);
+        //fileio::show_dir("/proc", false);
+
+        // Implement & Discuss (TODO): init::init_network();
+        // Show available network interfaces
+        // fileio::show_dir("/sys/class/net/", false);
+    }
+
+    fn init_local(&self) {
+        system::init::init_local_logging(self.logger_level);
+    }
+
+    pub fn init(&self) {
+        if system::get_pid() == 1 {
+            self.init_pid1();
+        } else {
+            self.init_local();
+        }
     }
 }
 
