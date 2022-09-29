@@ -28,7 +28,7 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-use std::fs::{ReadDir, read_dir};
+use std::fs::{read_dir, ReadDir};
 
 use walkdir::WalkDir;
 
