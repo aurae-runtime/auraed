@@ -1,7 +1,8 @@
-use std::fs;
+use std::fs::{ReadDir, read_dir};
+
 use walkdir::WalkDir;
 
-fn print_flat_dir(paths: fs::ReadDir) {
+fn print_flat_dir(paths: ReadDir) {
     for path in paths {
         match path {
             Err(p) => println!("Error: {}", p),
@@ -21,7 +22,7 @@ pub fn show_dir(dir: &str, recurse: bool) {
             }
         }
     } else {
-        let paths = fs::read_dir(dir);
+        let paths = read_dir(dir);
 
         match paths {
             Ok(paths) => print_flat_dir(paths),
