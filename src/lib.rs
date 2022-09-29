@@ -34,7 +34,7 @@ use anyhow::Context;
 use init::init_pid1_logging;
 use init::init_rootfs;
 use init::init_syslog_logging;
-use init::network::init_iface;
+use init::network::init_iface_ipv6;
 use init::network::show_network_info;
 use init::print_logo;
 use log::*;
@@ -52,8 +52,8 @@ use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
-use crate::init::fileio::show_dir;
-use crate::init::network::init_lo_network;
+use crate::init::network::init_iface_ipv4;
+// use crate::init::fileio::show_dir;
 use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
 use crate::runtime::runtime_server::RuntimeServer;
@@ -194,9 +194,13 @@ impl SystemRuntime {
         tokio::spawn(connection);
 
         trace!("configure lo");
-        init_lo_network(handle.clone()).await;
+
+        init_iface_ipv6(handle.clone(), "::1/128".parse().unwrap(), "lo", 0)
+            .await;
+        init_iface_ipv4(handle.clone(), "127.0.0.1/8".parse().unwrap(), "lo", 0)
+            .await;
         trace!("configure eth0");
-        init_iface(handle.clone(), "fe80::2/64".parse().unwrap(), "eth0", 0)
+        init_iface_ipv6(handle.clone(), "fe80::2/64".parse().unwrap(), "eth0", 0)
             .await;
         show_network_info(handle).await;
         trace!("init of auraed as pid1 done");

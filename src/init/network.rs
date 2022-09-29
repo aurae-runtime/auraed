@@ -36,7 +36,7 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str;
 use std::{cmp, fs, io};
 
-use ipnetwork::IpNetwork;
+use ipnetwork::{IpNetwork, Ipv4Network};
 use ipnetwork::Ipv6Network;
 
 use rtnetlink::Handle;
@@ -75,6 +75,17 @@ async fn set_link_up(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+async fn set_link_down(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
+    let mut links = handle.link().get().match_name(iface.to_string()).execute();
+
+    if let Some(link) = links.try_next().await? {
+        handle.link().set(link.header.index).down().execute().await?
+    } else {
+        warn!("iface '{}' not found", iface);
+    }
+    Ok(())
+}
+
 pub async fn add_address(
     iface: &str,
     ip: IpNetwork,
@@ -102,7 +113,7 @@ pub fn setup_sriov(iface: &str, limit: u16) {
     let sriov_totalvfs = match get_sriov_capabilities(iface){
         Ok(val) => val,
         Err(e) => {
-            error!("{}", e);
+            error!("sriov Error: failed to get sriov capabilities of device {}. {}", iface, e);
             return
         }  
     };
@@ -110,7 +121,7 @@ pub fn setup_sriov(iface: &str, limit: u16) {
     let sriov_totalvfs = match sriov_totalvfs.trim_end().parse::<u16>(){
         Ok(val) => val,
         Err(e) => {
-            error!("{}", e);
+            error!("sriov Error: failed to parse sriov capabilities. {}", e);
             return
         }  
     };
@@ -124,27 +135,59 @@ pub fn setup_sriov(iface: &str, limit: u16) {
     .expect("Unable to write file");
 }
 
-pub async fn init_iface(
+pub async fn init_iface_ipv6(
     handle: rtnetlink::Handle,
     ipv6: Ipv6Network,
     iface: &str,
     num_sriov: u16,
 ) {
+
+    if let Err(e) = set_link_down(handle.clone(), iface).await {
+        error!("Ipv6 Error:failed to set {} link down. Error: {}", iface, e);
+        return;
+    }
+
     if let Err(e) =
         add_address(iface, IpNetwork::V6(ipv6), handle.clone()).await
     {
-        warn!("Error adding address to iface. Error: {}", e);
+        error!("Ipv6 Error: failed to add ipv6 address to iface. Error: {}", e);
         return;
     }
     if let Err(e) = set_link_up(handle, iface).await {
-        warn!("Error setting link up. Error: {}", e);
+        error!("Ipv6 Error setting: failed to set {} link up. Error: {}", iface, e);
         return;
     }
 
     setup_sriov(iface, num_sriov);
 }
 
-pub async fn init_lo_network(handle: rtnetlink::Handle) {
+pub async fn init_iface_ipv4(
+    handle: rtnetlink::Handle,
+    ipv4: Ipv4Network,
+    iface: &str,
+    num_sriov: u16,
+) {
+    if let Err(e) = set_link_down(handle.clone(), iface).await {
+        error!("Ipv4 Error:failed to set {} link down. Error: {}", iface, e);
+        return;
+    }
+
+    if let Err(e) =
+        add_address(iface, IpNetwork::V4(ipv4), handle.clone()).await
+    {
+        error!("Ipv4 Error: failed to add ipv4 address to iface. Error: {}", e);
+        return;
+    }
+    if let Err(e) = set_link_up(handle, iface).await {
+        error!("Ipv4 Error: failed setting {} link up. Error: {}", iface, e);
+        return;
+    }
+
+    setup_sriov(iface, num_sriov);
+}
+
+
+pub async fn init_loopback_network(handle: rtnetlink::Handle) {
     let localhost_ipv4: IpNetwork = "127.0.0.1/8".parse().unwrap();
     let localhost_ipv6: IpNetwork = "::1/128".parse().unwrap();
 
@@ -249,7 +292,9 @@ pub async fn dump_addresses(
                                 );
                             }
                         }
-                        None => {}
+                        None => {
+
+                        }
                     }
                 }
             }
