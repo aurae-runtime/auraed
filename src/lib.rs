@@ -192,15 +192,11 @@ impl SystemRuntime {
         init_syslog_logging(self.logger_level);
     }
 
-    fn init_local(&self) {
-        system::init::init_local_logging(self.logger_level);
-    }
-
     pub fn init(&self) {
         if init::get_pid() == 1 {
             self.init_pid1();
         } else {
-            self.init_local();
+            self.init_pid_gt_1();
         }
     }
 }
