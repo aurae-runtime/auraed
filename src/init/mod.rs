@@ -57,6 +57,29 @@ pub fn print_logo() {
     println!("{}", banner());
 }
 
+#[cfg(not(target_os = "macos"))]
+unsafe fn x_mount(
+    src: *const i8,
+    target: *const i8,
+    fstype: *const i8,
+    flags: i32,
+    options: *const libc::c_void,
+) -> i32 {
+    libc::mount(src, target, flags, options as *const libc::c_void)
+}
+
+/* cross-platform mount accounting for BSD mount on Macs */
+#[cfg(target_os = "macos")]
+unsafe fn x_mount(
+    src: *const i8,
+    target: *const i8,
+    _fstype: *const i8,
+    flags: i32,
+    options: *const i8,
+) -> i32 {
+    libc::mount(src, target, flags, options as *mut libc::c_void)
+}
+
 fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
     info!("Mounting {} as type {}", target_name, fstype);
     unsafe {
@@ -66,12 +89,12 @@ fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
         let fstype_c_ctr = CString::new(fstype).unwrap();
         let options_c_ctr = CString::new("").unwrap();
 
-        let ret = libc::mount(
+        let ret = x_mount(
             src_c_ctr.as_ptr() as *const i8,
             target_name_c_ctr.as_ptr() as *const i8,
             fstype_c_ctr.as_ptr() as *const i8,
             0,
-            options_c_ctr.as_ptr() as *const libc::c_void,
+            options_c_ctr.as_ptr() as *const i8,
         );
 
         if ret < 0 {
