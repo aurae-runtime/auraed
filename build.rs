@@ -40,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "meta.AuraeMeta",
             "#[allow(clippy::derive_partial_eq_without_eq)]",
         )
+        // .type_attribute("runtime.Executable", "#[derive(zerocopy::AsBytes)]")
         .compile(
             &[
                 "../api/v1/meta.proto",
