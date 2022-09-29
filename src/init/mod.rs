@@ -57,6 +57,7 @@ pub fn print_logo() {
     println!("{}", banner());
 }
 
+#[cfg(not(target_os = "macos"))]
 fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
     info!("Mounting {} as type {}", target_name, fstype);
     unsafe {
@@ -72,6 +73,31 @@ fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
             fstype_c_ctr.as_ptr() as *const i8,
             0,
             options_c_ctr.as_ptr() as *const libc::c_void,
+        );
+
+        if ret < 0 {
+            error!("Failed to mount ({})", ret);
+            libc::perror(
+                String::from("Error: ").as_bytes().as_ptr() as *const i8
+            );
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn mount_vfs(source_name: &str, target_name: &str, _fstype: &str) {
+    info!("Mounting {}", target_name);
+    unsafe {
+        // CString constructor ensures the trailing 0byte, which is required by libc::mount
+        let src_c_ctr = CString::new(source_name).unwrap();
+        let target_name_c_ctr = CString::new(target_name).unwrap();
+        let options_c_ctr = CString::new("").unwrap();
+
+        let ret = libc::mount(
+            src_c_ctr.as_ptr() as *const i8,
+            target_name_c_ctr.as_ptr() as *const i8,
+            0,
+            options_c_ctr.as_ptr() as *mut libc::c_void,
         );
 
         if ret < 0 {
