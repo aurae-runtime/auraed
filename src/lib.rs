@@ -64,7 +64,6 @@ mod init;
 mod meta;
 mod observe;
 mod runtime;
-mod system;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 
@@ -197,7 +196,7 @@ impl SystemRuntime {
     }
 
     pub fn init(&self) {
-        if system::get_pid() == 1 {
+        if init::get_pid() == 1 {
             self.init_pid1();
         } else {
             self.init_local();

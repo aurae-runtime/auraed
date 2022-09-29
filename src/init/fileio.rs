@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* -------------------------------------------------------------------------- *\
  *             Apache 2.0 License Copyright © 2022 The Aurae Authors          *
  *                                                                            *
@@ -29,6 +30,9 @@
 \* -------------------------------------------------------------------------- */
 
 use std::fs::{read_dir, ReadDir};
+=======
+use std::fs::{ReadDir, read_dir};
+>>>>>>> 24989c8 (rename system to init)
 
 use walkdir::WalkDir;
 
@@ -60,3 +64,25 @@ pub fn show_dir(dir: &str, recurse: bool) {
         }
     }
 }
+<<<<<<< HEAD
+=======
+<<<<<<<< HEAD:src/system/fileio.rs
+
+#[allow(dead_code)]
+fn write_file(file_path: &str, content: &str) {
+    unsafe {
+        let fp: *mut libc::FILE = libc::fopen(
+            String::from(file_path).as_bytes().as_ptr() as *const i8,
+            String::from("w").as_bytes().as_ptr() as *const i8,
+        );
+
+        libc::fprintf(
+            fp,
+            String::from(content).as_bytes().as_ptr() as *const i8,
+        );
+        libc::fclose(fp);
+    }
+}
+========
+>>>>>>>> 24989c8 (rename system to init):src/init/fileio.rs
+>>>>>>> 24989c8 (rename system to init)
