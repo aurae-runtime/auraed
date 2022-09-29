@@ -124,6 +124,8 @@ impl ActiveModelBehavior for ActiveModel {}
 pub async fn hydrate(
     // TODO Left off here. We need a better "db init" sequence... I am not convinced runtime::hydrate is the way
     // TODO We need to use the .proto files as our schema and hydrate a DB from that... we have DB maintenance to do..
+    // TODO Migration docs: https://www.sea-ql.org/SeaORM/docs/migration/running-migration/
+    // TODO Migration example: https://github.com/SeaQL/sea-orm/blob/master/examples/tonic_example/migration/src/m20220120_000001_create_post_table.rs
     _db: &DatabaseConnection,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let _pid2 = ActiveModel {
