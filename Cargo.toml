@@ -52,6 +52,8 @@ futures = "0.3.23"
 h2 = "0.3.13"
 rustls = "0.20.6"
 anyhow = "1.0.65"
+libc = "0.2"
+walkdir = "2"
 
 [build-dependencies]
 tonic-build = "0.8"

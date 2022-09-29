@@ -40,6 +40,10 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Context;
+use init::init_pid1_logging;
+use init::init_rootfs;
+use init::init_syslog_logging;
+use init::print_logo;
 use log::*;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
@@ -51,6 +55,7 @@ use crate::observe::ObserveService;
 // use crate::runtime::LocalRuntimeService;
 
 mod codes;
+mod init;
 mod meta;
 mod observe;
 mod runtime;
@@ -128,6 +133,42 @@ impl AuraedRuntime {
 
         info!("{:?}", res);
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct SystemRuntime {
+    pub logger_level: Level,
+}
+
+impl SystemRuntime {
+    fn init_pid1(&self) {
+        print_logo();
+
+        init_pid1_logging(self.logger_level);
+
+        init_rootfs();
+
+        // Show content of file-based kernel interface directories
+        //fileio::show_dir("/dev", false);
+        //fileio::show_dir("/sys", false);
+        //fileio::show_dir("/proc", false);
+
+        // Implement & Discuss (TODO): init::init_network();
+        // Show available network interfaces
+        // fileio::show_dir("/sys/class/net/", false);
+    }
+
+    fn init_pid_gt_1(&self) {
+        init_syslog_logging(self.logger_level);
+    }
+
+    pub fn init(&self) {
+        if init::get_pid() == 1 {
+            self.init_pid1();
+        } else {
+            self.init_pid_gt_1();
+        }
     }
 }
 
