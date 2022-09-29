@@ -81,7 +81,7 @@ async fn daemon() -> i32 {
     let system = SystemRuntime { logger_level };
 
     // Initializes Logging and prepares system if auraed is run as pid=1
-    system.init();
+    system.init().await;
 
     trace!("**Logging: Verbose Mode**");
     info!("Starting Aurae Daemon Runtime...");

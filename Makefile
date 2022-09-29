@@ -49,8 +49,8 @@ release: ## Build and install (release) 🎉
 	@$(cargo) install --path .
 
 test: ## Run the tests
-	@$(cargo) test                # Tidy output
-	#@$(cargo) test -- --nocapture # Full output
+	#@$(cargo) test                # Tidy output
+	@$(cargo) test -- --nocapture # Full output
 
 
 clean: ## Clean your artifacts 🧼

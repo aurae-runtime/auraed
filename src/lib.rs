@@ -34,25 +34,34 @@
 // #![feature(unix_socket_abstract)]
 // use std::os::unix::net::SocketAddr;
 
-use std::fs;
-use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
-use std::path::PathBuf;
-
 use anyhow::Context;
 use init::init_pid1_logging;
 use init::init_rootfs;
 use init::init_syslog_logging;
+use init::network::init_iface;
+use init::network::show_network_info;
 use init::print_logo;
 use log::*;
+use rtnetlink::new_connection;
+use sea_orm::ConnectOptions;
+use sea_orm::ConnectionTrait;
+use sea_orm::Database;
+use sea_orm::Statement;
+use std::borrow::Cow;
+use std::fs;
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::path::PathBuf;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
+use crate::init::fileio::show_dir;
+use crate::init::network::init_lo_network;
 use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
-// use crate::runtime::local_runtime_server::LocalRuntimeServer;
-// use crate::runtime::LocalRuntimeService;
+use crate::runtime::runtime_server::RuntimeServer;
+use crate::runtime::RuntimeService;
 
 mod codes;
 mod init;
@@ -94,6 +103,7 @@ impl AuraedRuntime {
                 )
             })?;
         let server_key = tokio::fs::read(&self.server_key).await?;
+        let db_key = server_key.clone();
         let server_identity = Identity::from_pem(server_crt, server_key);
         info!("Register Server SSL Identity");
 
@@ -113,7 +123,7 @@ impl AuraedRuntime {
         let handle = tokio::spawn(async {
             Server::builder()
                 .tls_config(tls)?
-                //.add_service(LocalRuntimeServer::new(LocalRuntimeService::default()))
+                .add_service(RuntimeServer::new(RuntimeService::default()))
                 .add_service(ObserveServer::new(ObserveService::default()))
                 .serve_with_incoming(sock_stream)
                 .await
@@ -127,6 +137,30 @@ impl AuraedRuntime {
         fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766))
             .unwrap();
         info!("User Access Socket Created: {}", self.socket.display());
+
+        // SQLite
+        info!("Database Location:  /var/lib/aurae.db");
+        info!("Unlocking SQLite Database with Key: {:?}", self.server_key);
+        let mut opt =
+            ConnectOptions::new("sqlite:/var/lib/aurae.db".to_owned());
+        opt.sqlx_logging(false).sqlcipher_key(Cow::from(format!(
+            "{:?}",
+            db_key.to_ascii_lowercase()
+        )));
+
+        // Pragma initial connection
+        let mut opt = ConnectOptions::new("sqlite::memory:".to_owned());
+        opt.sqlx_logging(false); // TODO add sqlcipher_key
+        let db = Database::connect(opt).await?;
+        let x = db
+            .execute(Statement::from_string(
+                db.get_database_backend(),
+                format!("PRAGMA database_list;"),
+            ))
+            .await?;
+        info!("Initializing: SQLite: {:?}", x);
+
+        //runtime::hydrate(&db).await?;
 
         // Event loop
         let res = handle.await.unwrap();
@@ -142,11 +176,13 @@ pub struct SystemRuntime {
 }
 
 impl SystemRuntime {
-    fn init_pid1(&self) {
+    async fn init_pid1(&self) {
         print_logo();
 
         init_pid1_logging(self.logger_level);
+        trace!("Logging started");
 
+        trace!("Configure filesystem");
         init_rootfs();
 
         // Show content of file-based kernel interface directories
@@ -154,18 +190,29 @@ impl SystemRuntime {
         //fileio::show_dir("/sys", false);
         //fileio::show_dir("/proc", false);
 
-        // Implement & Discuss (TODO): init::init_network();
         // Show available network interfaces
-        // fileio::show_dir("/sys/class/net/", false);
+        //show_dir("/sys/class/net/", false);
+
+        trace!("configure network");
+        let (connection, handle, _) = new_connection().unwrap();
+        tokio::spawn(connection);
+
+        trace!("configure lo");
+        init_lo_network(handle.clone()).await;
+        trace!("configure eth0");
+        init_iface(handle.clone(), "fe80::2/64".parse().unwrap(), "eth0", 0)
+            .await;
+        show_network_info(handle).await;
+        trace!("init of auraed as pid1 done");
     }
 
     fn init_pid_gt_1(&self) {
         init_syslog_logging(self.logger_level);
     }
 
-    pub fn init(&self) {
+    pub async fn init(&self) {
         if init::get_pid() == 1 {
-            self.init_pid1();
+            self.init_pid1().await;
         } else {
             self.init_pid_gt_1();
         }
