@@ -58,28 +58,6 @@ pub fn print_logo() {
 }
 
 #[cfg(not(target_os = "macos"))]
-unsafe fn x_mount(
-    src: *const i8,
-    target: *const i8,
-    fstype: *const i8,
-    flags: i32,
-    options: *const libc::c_void,
-) -> i32 {
-    libc::mount(src, target, flags, options as *const libc::c_void)
-}
-
-/* cross-platform mount accounting for BSD mount on Macs */
-#[cfg(target_os = "macos")]
-unsafe fn x_mount(
-    src: *const i8,
-    target: *const i8,
-    _fstype: *const i8,
-    flags: i32,
-    options: *const i8,
-) -> i32 {
-    libc::mount(src, target, flags, options as *mut libc::c_void)
-}
-
 fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
     info!("Mounting {} as type {}", target_name, fstype);
     unsafe {
@@ -89,12 +67,37 @@ fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
         let fstype_c_ctr = CString::new(fstype).unwrap();
         let options_c_ctr = CString::new("").unwrap();
 
-        let ret = x_mount(
+        let ret = libc::mount(
             src_c_ctr.as_ptr() as *const i8,
             target_name_c_ctr.as_ptr() as *const i8,
             fstype_c_ctr.as_ptr() as *const i8,
             0,
-            options_c_ctr.as_ptr() as *const i8,
+            options_c_ctr.as_ptr() as *const libc::c_void,
+        );
+
+        if ret < 0 {
+            error!("Failed to mount ({})", ret);
+            libc::perror(
+                String::from("Error: ").as_bytes().as_ptr() as *const i8
+            );
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn mount_vfs(source_name: &str, target_name: &str, _fstype: &str) {
+    info!("Mounting {}", target_name);
+    unsafe {
+        // CString constructor ensures the trailing 0byte, which is required by libc::mount
+        let src_c_ctr = CString::new(source_name).unwrap();
+        let target_name_c_ctr = CString::new(target_name).unwrap();
+        let options_c_ctr = CString::new("").unwrap();
+
+        let ret = libc::mount(
+            src_c_ctr.as_ptr() as *const i8,
+            target_name_c_ctr.as_ptr() as *const i8,
+            0,
+            options_c_ctr.as_ptr() as *mut libc::c_void,
         );
 
         if ret < 0 {
