@@ -29,6 +29,7 @@
 \* -------------------------------------------------------------------------- */
 
 pub(crate) mod fileio;
+pub(crate) mod network;
 
 use log::{error, info, warn, Level};
 use std::ffi::CString;
