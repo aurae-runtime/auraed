@@ -46,7 +46,6 @@ fn syscall_reboot(action: i32) {
     }
 }
 
-#[allow(dead_code)]
 pub fn power_off() {
     syscall_reboot(libc::LINUX_REBOOT_CMD_POWER_OFF);
 }
@@ -65,6 +64,9 @@ pub struct InputEvent {
     code: u16,
     value: u32,
 }
+
+const KEY_POWER: u16 = 116;
+
 
 #[allow(dead_code)]
 pub fn spawn_acpi_listener() {
@@ -88,6 +90,9 @@ pub fn spawn_acpi_listener() {
         match event_file.read(event_slice) {
             Ok(result) => {
                 info!("Event0: {} {:?}",result, event);
+                if event.code == KEY_POWER {
+                    power_off();
+                }
             }
             Err(e) => {
                 error!(
