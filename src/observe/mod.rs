@@ -45,11 +45,10 @@ impl Observe for ObserveService {
         &self,
         _request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, Status> {
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
+        let meta = vec![meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
-        });
+        }];
         let response = StatusResponse { meta, state: STATE_ACTIVE.into() };
         Ok(Response::new(response))
     }

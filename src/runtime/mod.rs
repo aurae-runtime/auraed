@@ -50,11 +50,10 @@ impl Runtime for RuntimeService {
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
+        let meta = vec![meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
-        });
+        }];
         let response =
             ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
@@ -64,11 +63,10 @@ impl Runtime for RuntimeService {
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
+        let meta = vec![meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
-        });
+        }];
         let response =
             ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
@@ -78,11 +76,10 @@ impl Runtime for RuntimeService {
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
+        let meta = vec![meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
-        });
+        }];
         let response =
             ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
@@ -92,11 +89,10 @@ impl Runtime for RuntimeService {
         req: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let r = req.into_inner();
-        let mut meta = Vec::new();
-        meta.push(meta::AuraeMeta {
+        let meta = vec![meta::AuraeMeta {
             code: CODE_SUCCESS,
             message: STATUS_READY.into(),
-        });
+        }];
         let response =
             ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
