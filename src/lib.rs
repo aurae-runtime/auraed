@@ -231,6 +231,7 @@ impl SystemRuntime {
         }
 
         show_network_info(handle).await;
+        spawn_acpi_listener();
 
         trace!("init of auraed as pid1 done");
     }
