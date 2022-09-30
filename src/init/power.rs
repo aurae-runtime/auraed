@@ -65,6 +65,7 @@ pub struct InputEvent {
     value: u32,
 }
 
+// see  https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/input-event-codes.h#L191
 const KEY_POWER: u16 = 116;
 
 
@@ -84,9 +85,8 @@ pub fn spawn_acpi_listener() {
 
 
     std::thread::spawn(move || loop {
-        unsafe {
-        let event_slice = slice::from_raw_parts_mut(&mut event as *mut _ as *mut u8, event_size);
-
+        let event_slice = unsafe {slice::from_raw_parts_mut(&mut event as *mut _ as *mut u8, event_size)};
+    
         match event_file.read(event_slice) {
             Ok(result) => {
                 info!("Event0: {} {:?}",result, event);
@@ -102,7 +102,7 @@ pub fn spawn_acpi_listener() {
                 );
             }
         }
-    }
+
     });
 
 }
