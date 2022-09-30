@@ -34,7 +34,6 @@ use anyhow::Context;
 use init::init_pid1_logging;
 use init::init_rootfs;
 use init::init_syslog_logging;
-use init::network::init_iface_ipv6;
 use init::network::show_network_info;
 use init::print_logo;
 use log::*;
@@ -52,7 +51,11 @@ use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
-use crate::init::network::init_iface_ipv4;
+use crate::init::network::set_link_up;
+use crate::init::network::{add_address_ipv6, add_address_ipv4};
+
+use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
+
 // use crate::init::fileio::show_dir;
 use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
@@ -66,6 +69,7 @@ mod observe;
 mod runtime;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
+pub const LOOPBACK_DEV: &str = "lo";
 
 #[derive(Debug)]
 pub struct AuraedRuntime {
@@ -180,29 +184,45 @@ impl SystemRuntime {
 
         trace!("Configure filesystem");
         init_rootfs();
-
         // Show content of file-based kernel interface directories
         //fileio::show_dir("/dev", false);
         //fileio::show_dir("/sys", false);
         //fileio::show_dir("/proc", false);
 
+        trace!("configure network");
         // Show available network interfaces
         //show_dir("/sys/class/net/", false);
-
-        trace!("configure network");
         let (connection, handle, _) = new_connection().unwrap();
         tokio::spawn(connection);
 
-        trace!("configure lo");
+        trace!("configure {}", LOOPBACK_DEV);
+        if let Ok(ipv6) = "::1/128".parse::<Ipv6Network>(){
+            if let Err(e) = add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await{
+                error!("{}",e);
+            };
+        };
+        if let Ok(ipv4) = "127.0.0.1/8".parse::<Ipv4Network>(){
+            if let Err(e) = add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await{
+                error!("{}",e);
+            }
+        };
 
-        init_iface_ipv6(handle.clone(), "::1/128".parse().unwrap(), "lo", 0)
-            .await;
-        init_iface_ipv4(handle.clone(), "127.0.0.1/8".parse().unwrap(), "lo", 0)
-            .await;
+        if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await{
+            error!("{}",e);
+        }
+
         trace!("configure eth0");
-        init_iface_ipv6(handle.clone(), "fe80::2/64".parse().unwrap(), "eth0", 0)
-            .await;
+        if let Ok(ipv6) = "fe80::2/64".parse::<Ipv6Network>(){
+            if let Err(e) = add_address_ipv6("eth0", ipv6, handle.clone()).await{
+                error!("{}",e);
+            }
+        };
+        if let Err(e) = set_link_up(handle.clone(), "eth0").await{
+            error!("{}",e);
+        }
+
         show_network_info(handle).await;
+
         trace!("init of auraed as pid1 done");
     }
 

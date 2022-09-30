@@ -30,14 +30,13 @@
 
 use anyhow::anyhow;
 use futures::stream::TryStreamExt;
-use log::{error, info, warn};
+use log::{error, info, warn, trace};
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str;
 use std::{cmp, fs, io};
 
-use ipnetwork::{IpNetwork, Ipv4Network};
-use ipnetwork::Ipv6Network;
+use ipnetwork::{Ipv4Network, Ipv6Network};
 
 use rtnetlink::Handle;
 use netlink_packet_route::rtnl::link::nlas::Nla;
@@ -64,7 +63,7 @@ pub fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
     ))
 }
 
-async fn set_link_up(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
+pub async fn set_link_up(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -72,10 +71,12 @@ async fn set_link_up(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
     } else {
         warn!("iface '{}' not found", iface);
     }
+    trace!("Set link {} up", iface);
     Ok(())
 }
 
-async fn set_link_down(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
+#[allow(dead_code)]
+pub async fn set_link_down(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -83,12 +84,13 @@ async fn set_link_down(handle: Handle, iface: &str) -> Result<(), anyhow::Error>
     } else {
         warn!("iface '{}' not found", iface);
     }
+    trace!("Set link {} down", iface);
     Ok(())
 }
 
-pub async fn add_address(
+pub async fn add_address_ipv6(
     iface: &str,
-    ip: IpNetwork,
+    ip: Ipv6Network,
     handle: rtnetlink::Handle,
 ) -> Result<(), anyhow::Error> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
@@ -96,15 +98,34 @@ pub async fn add_address(
     if let Some(link) = links.try_next().await? {
         handle
             .address()
-            .add(link.header.index, ip.ip(), ip.prefix())
+            .add(link.header.index, std::net::IpAddr::V6(ip.ip()), ip.prefix())
             .execute()
             .await?
     }
+    trace!("Added address to link {}", iface);
+    Ok(())
+}
 
+pub async fn add_address_ipv4(
+    iface: &str,
+    ip: Ipv4Network,
+    handle: rtnetlink::Handle,
+) -> Result<(), anyhow::Error> {
+    let mut links = handle.link().get().match_name(iface.to_string()).execute();
+
+    if let Some(link) = links.try_next().await? {
+        handle
+            .address()
+            .add(link.header.index, std::net::IpAddr::V4(ip.ip()), ip.prefix())
+            .execute()
+            .await?
+    }
+    trace!("Added address to link {}", iface);
     Ok(())
 }
 
 // Create max(limit, max possible sriov for given iface) sriov devices for the given iface
+#[allow(dead_code)]
 pub fn setup_sriov(iface: &str, limit: u16) {
     if limit == 0 {
         return;
@@ -135,70 +156,6 @@ pub fn setup_sriov(iface: &str, limit: u16) {
     .expect("Unable to write file");
 }
 
-pub async fn init_iface_ipv6(
-    handle: rtnetlink::Handle,
-    ipv6: Ipv6Network,
-    iface: &str,
-    num_sriov: u16,
-) {
-
-    if let Err(e) = set_link_down(handle.clone(), iface).await {
-        error!("Ipv6 Error:failed to set {} link down. Error: {}", iface, e);
-        return;
-    }
-
-    if let Err(e) =
-        add_address(iface, IpNetwork::V6(ipv6), handle.clone()).await
-    {
-        error!("Ipv6 Error: failed to add ipv6 address to iface. Error: {}", e);
-        return;
-    }
-    if let Err(e) = set_link_up(handle, iface).await {
-        error!("Ipv6 Error setting: failed to set {} link up. Error: {}", iface, e);
-        return;
-    }
-
-    setup_sriov(iface, num_sriov);
-}
-
-pub async fn init_iface_ipv4(
-    handle: rtnetlink::Handle,
-    ipv4: Ipv4Network,
-    iface: &str,
-    num_sriov: u16,
-) {
-    if let Err(e) = set_link_down(handle.clone(), iface).await {
-        error!("Ipv4 Error:failed to set {} link down. Error: {}", iface, e);
-        return;
-    }
-
-    if let Err(e) =
-        add_address(iface, IpNetwork::V4(ipv4), handle.clone()).await
-    {
-        error!("Ipv4 Error: failed to add ipv4 address to iface. Error: {}", e);
-        return;
-    }
-    if let Err(e) = set_link_up(handle, iface).await {
-        error!("Ipv4 Error: failed setting {} link up. Error: {}", iface, e);
-        return;
-    }
-
-    setup_sriov(iface, num_sriov);
-}
-
-
-pub async fn init_loopback_network(handle: rtnetlink::Handle) {
-    let localhost_ipv4: IpNetwork = "127.0.0.1/8".parse().unwrap();
-    let localhost_ipv6: IpNetwork = "::1/128".parse().unwrap();
-
-    if let Err(e) = add_address("lo", localhost_ipv4, handle.clone()).await {
-        error!("{:?}", e);
-    }
-
-    if let Err(e) = add_address("lo", localhost_ipv6, handle.clone()).await {
-        error!("{:?}", e);
-    }
-}
 
 pub async fn get_links(
     handle: rtnetlink::Handle,
@@ -293,7 +250,7 @@ pub async fn dump_addresses(
                             }
                         }
                         None => {
-
+                            error!("Failed to get ip type of {:?}", addr);
                         }
                     }
                 }
