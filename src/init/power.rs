@@ -28,9 +28,9 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-use log::{error, info, trace, warn};
+use log::{error, info, trace};
 use std::{
-    fs::{self, read, OpenOptions},
+    fs::{OpenOptions, File},
     io::Read,
     mem,
     path::Path,
@@ -68,17 +68,28 @@ pub struct InputEvent {
 // see  https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/input-event-codes.h#L191
 const KEY_POWER: u16 = 116;
 
-
 #[allow(dead_code)]
 pub fn spawn_acpi_listener() {
     // TODO: detect power button devices
-    // devices are listed in /proc/bus/input/devices
+    // - multiple power buttons are possible
+    // - handle reboot button with a reboot instead
+    // - devices are listed in /proc/bus/input/devices
     let power_btn_device = Path::new("/dev/input/event0");
 
     let mut file_options = OpenOptions::new();
     file_options.read(true);
     file_options.write(false);
-    let mut event_file = file_options.open(power_btn_device).unwrap();
+    
+    let mut event_file: File;
+    
+    match file_options.open(power_btn_device) {
+        Ok(f) => event_file = f,
+        Err(e) => {
+            error!("Could not open power button device {}. {:?}", power_btn_device.display(), e);
+            error!("Stopping acpi power button listener.");
+            return;
+        }
+    }
 
     let mut event: InputEvent = unsafe { mem::zeroed() };
     let event_size = mem::size_of::<InputEvent>();
@@ -86,11 +97,14 @@ pub fn spawn_acpi_listener() {
 
     std::thread::spawn(move || loop {
         let event_slice = unsafe {slice::from_raw_parts_mut(&mut event as *mut _ as *mut u8, event_size)};
-    
         match event_file.read(event_slice) {
             Ok(result) => {
-                info!("Event0: {} {:?}",result, event);
+                trace!("Event0: {} {:?}",result, event);
                 if event.code == KEY_POWER {
+                    // TODO: shutdown runtime
+                    // - need to send signal via a channel to runtime
+                    // - await for runtime
+                    info!("Power Button pressed - shutting down now");
                     power_off();
                 }
             }

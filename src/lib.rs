@@ -186,12 +186,6 @@ impl SystemRuntime {
 
         trace!("Configure filesystem");
         init_rootfs();
-        // Show content of file-based kernel interface directories
-        fileio::show_dir("/dev/input", false);
-        fileio::show_dir("/proc/acpi/", true);
-
-        //fileio::show_dir("/sys", false);
-        //fileio::show_dir("/proc", false);
 
         trace!("configure network");
         // Show available network interfaces
