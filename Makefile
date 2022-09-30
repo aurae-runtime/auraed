@@ -28,9 +28,9 @@
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
-include hack/hack.mk
-
-all: compile
+# Defaults
+default: install
+all: install
 
 executable   ?=  auraed
 cargo         =  cargo
@@ -42,22 +42,25 @@ compile: ## Compile for the local architecture ⚙
 
 install: ## Build and install (debug) 🎉
 	@echo "Installing..."
+	@$(cargo) clippy
 	@$(cargo) install --debug --path .
 
 release: ## Build and install (release) 🎉
 	@echo "Installing..."
+	@$(cargo) clippy
 	@$(cargo) install --path .
 
 test: ## Run the tests
 	#@$(cargo) test                # Tidy output
 	@$(cargo) test -- --nocapture # Full output
 
-
 clean: ## Clean your artifacts 🧼
 	@echo "Cleaning..."
 	@cargo clean
 	@rm -rvf target/*
 	@rm -rvf $(executable)
+
+include hack/hack.mk
 
 .PHONY: help
 help:  ## Show help messages for make targets

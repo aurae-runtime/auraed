@@ -30,6 +30,8 @@
 
 SHELL := /bin/bash
 
+empty:
+
 build-container:
 	cd hack/build-container && ./mk-build-container
 	mkdir -p target

@@ -150,7 +150,7 @@ impl AuraedRuntime {
         let x = db
             .execute(Statement::from_string(
                 db.get_database_backend(),
-                format!("PRAGMA database_list;"),
+                "PRAGMA database_list;".to_string(),
             ))
             .await?;
         info!("Initializing: SQLite: {:?}", x);
