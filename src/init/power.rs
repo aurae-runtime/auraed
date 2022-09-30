@@ -69,7 +69,7 @@ pub struct InputEvent {
 const KEY_POWER: u16 = 116;
 
 #[allow(dead_code)]
-pub fn spawn_acpi_listener() {
+pub fn spawn_power_button_listener() {
     // TODO: detect power button devices
     // - multiple power buttons are possible
     // - handle reboot button with a reboot instead

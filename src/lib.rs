@@ -54,7 +54,7 @@ use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 use crate::init::fileio;
 use crate::init::network::set_link_up;
 use crate::init::network::{add_address_ipv4, add_address_ipv6};
-use crate::init::power::spawn_acpi_listener;
+use crate::init::power::spawn_power_button_listener;
 
 use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 
@@ -225,7 +225,7 @@ impl SystemRuntime {
         }
 
         show_network_info(handle).await;
-        spawn_acpi_listener();
+        spawn_power_button_listener();
 
         trace!("init of auraed as pid1 done");
     }
