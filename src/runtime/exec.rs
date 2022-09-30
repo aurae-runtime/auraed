@@ -42,15 +42,16 @@ pub struct Spawn {
 use std::process::Command;
 
 pub fn exec(cmd: &str) -> Result<Spawn, anyhow::Error> {
-    let spl = cmd.split(" ");
+    let spl = cmd.split(' ');
     let ents: Vec<&str> = spl.collect();
-    if ents.len() < 1 {
+    if ents.is_empty() {
         return Err(anyhow!("empty argument command string"));
     }
 
     // Build the base command ents[0]
-    let mut x = Command::new(ents[0].clone());
-    let c = ents[0].clone();
+    let base = ents.first().unwrap().to_string();
+    let c = base.clone();
+    let mut x = Command::new(base);
 
     // Add arguments if they exist
     if ents.len() > 1 {
