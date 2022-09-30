@@ -51,8 +51,10 @@ use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
+use crate::init::fileio;
 use crate::init::network::set_link_up;
-use crate::init::network::{add_address_ipv6, add_address_ipv4};
+use crate::init::network::{add_address_ipv4, add_address_ipv6};
+use crate::init::power::spawn_acpi_listener;
 
 use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 
@@ -185,7 +187,9 @@ impl SystemRuntime {
         trace!("Configure filesystem");
         init_rootfs();
         // Show content of file-based kernel interface directories
-        //fileio::show_dir("/dev", false);
+        fileio::show_dir("/dev/input", false);
+        fileio::show_dir("/proc/acpi/", true);
+
         //fileio::show_dir("/sys", false);
         //fileio::show_dir("/proc", false);
 
@@ -196,29 +200,34 @@ impl SystemRuntime {
         tokio::spawn(connection);
 
         trace!("configure {}", LOOPBACK_DEV);
-        if let Ok(ipv6) = "::1/128".parse::<Ipv6Network>(){
-            if let Err(e) = add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await{
-                error!("{}",e);
+        if let Ok(ipv6) = "::1/128".parse::<Ipv6Network>() {
+            if let Err(e) =
+                add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await
+            {
+                error!("{}", e);
             };
         };
-        if let Ok(ipv4) = "127.0.0.1/8".parse::<Ipv4Network>(){
-            if let Err(e) = add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await{
-                error!("{}",e);
+        if let Ok(ipv4) = "127.0.0.1/8".parse::<Ipv4Network>() {
+            if let Err(e) =
+                add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await
+            {
+                error!("{}", e);
             }
         };
 
-        if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await{
-            error!("{}",e);
+        if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await {
+            error!("{}", e);
         }
 
         trace!("configure eth0");
-        if let Ok(ipv6) = "fe80::2/64".parse::<Ipv6Network>(){
-            if let Err(e) = add_address_ipv6("eth0", ipv6, handle.clone()).await{
-                error!("{}",e);
+        if let Ok(ipv6) = "fe80::2/64".parse::<Ipv6Network>() {
+            if let Err(e) = add_address_ipv6("eth0", ipv6, handle.clone()).await
+            {
+                error!("{}", e);
             }
         };
-        if let Err(e) = set_link_up(handle.clone(), "eth0").await{
-            error!("{}",e);
+        if let Err(e) = set_link_up(handle.clone(), "eth0").await {
+            error!("{}", e);
         }
 
         show_network_info(handle).await;
