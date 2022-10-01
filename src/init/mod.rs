@@ -60,47 +60,10 @@ pub fn print_logo() {
     println!("{}", banner());
 }
 
-#[cfg(not(target_os = "macos"))]
 fn mount_vfs(
     source_name: &str,
     target_name: &str,
     fstype: &str,
-) -> anyhow::Result<()> {
-    info!("Mounting {} as type {}", target_name, fstype);
-
-    // CString constructor ensures the trailing 0byte, which is required by libc::mount
-    let src_c_ctr = CString::new(source_name)?;
-    let target_name_c_ctr = CString::new(target_name)?;
-    let fstype_c_ctr = CString::new(fstype)?;
-
-    let ret = unsafe {
-        libc::mount(
-            src_c_ctr.as_ptr(),
-            target_name_c_ctr.as_ptr(),
-            fstype_c_ctr.as_ptr(),
-            0,
-            ptr::null(),
-        )
-    };
-
-    if ret < 0 {
-        error!("Failed to mount ({})", ret);
-        let error = CString::new("Error: ").expect("error creating CString");
-        unsafe {
-            libc::perror(error.as_ptr());
-        };
-
-        Err(anyhow!("Failed to mount ({})", ret))
-    } else {
-        Ok(())
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn mount_vfs(
-    source_name: &str,
-    target_name: &str,
-    _fstype: &str,
 ) -> anyhow::Result<()> {
     info!("Mounting {}", target_name);
 
@@ -108,13 +71,30 @@ fn mount_vfs(
     let src_c_ctr = CString::new(source_name)?;
     let target_name_c_ctr = CString::new(target_name)?;
 
-    let ret = unsafe {
-        libc::mount(
-            src_c_ctr.as_ptr(),
-            target_name_c_ctr.as_ptr(),
-            0,
-            ptr::null_mut(),
-        )
+    let ret = {
+        #[cfg(not(target_os = "macos"))]
+        {
+            let fstype_c_ctr = CString::new(fstype)?;
+            unsafe {
+                libc::mount(
+                    src_c_ctr.as_ptr(),
+                    target_name_c_ctr.as_ptr(),
+                    fstype_c_ctr.as_ptr(),
+                    0,
+                    ptr::null(),
+                )
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        unsafe {
+            libc::mount(
+                src_c_ctr.as_ptr(),
+                target_name_c_ctr.as_ptr(),
+                0,
+                ptr::null_mut(),
+            )
+        }
     };
 
     if ret < 0 {
