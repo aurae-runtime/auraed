@@ -33,6 +33,7 @@ pub(crate) mod network;
 
 use log::{error, info, warn, Level};
 use std::ffi::CString;
+use std::ptr;
 use syslog::{BasicLogger, Facility, Formatter3164};
 
 const AURAED_SYSLOG_NAME: &str = "auraed";
@@ -61,25 +62,28 @@ pub fn print_logo() {
 #[cfg(not(target_os = "macos"))]
 fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
     info!("Mounting {} as type {}", target_name, fstype);
-    unsafe {
-        // CString constructor ensures the trailing 0byte, which is required by libc::mount
-        let src_c_ctr = CString::new(source_name).unwrap();
-        let target_name_c_ctr = CString::new(target_name).unwrap();
-        let fstype_c_ctr = CString::new(fstype).unwrap();
-        let options_c_ctr = CString::new("").unwrap();
 
-        let ret = libc::mount(
-            src_c_ctr.as_ptr() as *const i8,
-            target_name_c_ctr.as_ptr() as *const i8,
-            fstype_c_ctr.as_ptr() as *const i8,
+    // CString constructor ensures the trailing 0byte, which is required by libc::mount
+    let src_c_ctr = CString::new(source_name).unwrap();
+    let target_name_c_ctr = CString::new(target_name).unwrap();
+    let fstype_c_ctr = CString::new(fstype).unwrap();
+
+    let ret = unsafe {
+        libc::mount(
+            src_c_ctr.as_ptr(),
+            target_name_c_ctr.as_ptr(),
+            fstype_c_ctr.as_ptr(),
             0,
-            options_c_ctr.as_ptr() as *const libc::c_void,
-        );
+            ptr::null(),
+        )
+    };
 
-        if ret < 0 {
-            error!("Failed to mount ({})", ret);
+    if ret < 0 {
+        error!("Failed to mount ({})", ret);
+        let error = CString::new("Error: ").unwrap();
+        unsafe {
             libc::perror(
-                String::from("Error: ").as_bytes().as_ptr() as *const i8
+                error.as_ptr()
             );
         }
     }
@@ -88,23 +92,26 @@ fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
 #[cfg(target_os = "macos")]
 fn mount_vfs(source_name: &str, target_name: &str, _fstype: &str) {
     info!("Mounting {}", target_name);
-    unsafe {
-        // CString constructor ensures the trailing 0byte, which is required by libc::mount
-        let src_c_ctr = CString::new(source_name).unwrap();
-        let target_name_c_ctr = CString::new(target_name).unwrap();
-        let options_c_ctr = CString::new("").unwrap();
 
-        let ret = libc::mount(
-            src_c_ctr.as_ptr() as *const i8,
-            target_name_c_ctr.as_ptr() as *const i8,
+    // CString constructor ensures the trailing 0byte, which is required by libc::mount
+    let src_c_ctr = CString::new(source_name).unwrap();
+    let target_name_c_ctr = CString::new(target_name).unwrap();
+
+    let ret = unsafe {
+        libc::mount(
+            src_c_ctr.as_ptr(),
+            target_name_c_ctr.as_ptr(),
             0,
-            options_c_ctr.as_ptr() as *mut libc::c_void,
-        );
+            ptr::null_mut(),
+        )
+    };
 
-        if ret < 0 {
-            error!("Failed to mount ({})", ret);
+    if ret < 0 {
+        error!("Failed to mount ({})", ret);
+        let error = CString::new("Error: ").unwrap();
+        unsafe {
             libc::perror(
-                String::from("Error: ").as_bytes().as_ptr() as *const i8
+                error.as_ptr()
             );
         }
     }
