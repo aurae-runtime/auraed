@@ -30,7 +30,7 @@
 
 use log::{error, info, trace};
 use std::{
-    fs::{OpenOptions, File},
+    fs::{File, OpenOptions},
     io::Read,
     mem,
     path::Path,
@@ -68,24 +68,22 @@ pub struct InputEvent {
 // see  https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/input-event-codes.h#L191
 const KEY_POWER: u16 = 116;
 
-#[allow(dead_code)]
-pub fn spawn_power_button_listener() {
-    // TODO: detect power button devices
-    // - multiple power buttons are possible
-    // - handle reboot button with a reboot instead
-    // - devices are listed in /proc/bus/input/devices
-    let power_btn_device = Path::new("/dev/input/event0");
 
+pub fn spawn_thread_power_button_listener(power_btn_device_path: &str) {
+    let power_btn_device_path = power_btn_device_path.to_string();
     let mut file_options = OpenOptions::new();
     file_options.read(true);
     file_options.write(false);
-    
+
     let mut event_file: File;
-    
-    match file_options.open(power_btn_device) {
+
+    match file_options.open(&power_btn_device_path) {
         Ok(f) => event_file = f,
         Err(e) => {
-            error!("Could not open power button device {}. {:?}", power_btn_device.display(), e);
+            error!(
+                "Could not open power button device {}. {:?}",
+                power_btn_device_path, e
+            );
             error!("Stopping acpi power button listener.");
             return;
         }
@@ -94,29 +92,35 @@ pub fn spawn_power_button_listener() {
     let mut event: InputEvent = unsafe { mem::zeroed() };
     let event_size = mem::size_of::<InputEvent>();
 
+    std::thread::spawn(move || {
+        let power_btn_device = Path::new(&power_btn_device_path);
 
-    std::thread::spawn(move || loop {
-        let event_slice = unsafe {slice::from_raw_parts_mut(&mut event as *mut _ as *mut u8, event_size)};
-        match event_file.read(event_slice) {
-            Ok(result) => {
-                trace!("Event0: {} {:?}",result, event);
-                if event.code == KEY_POWER {
-                    // TODO: shutdown runtime
-                    // - need to send signal via a channel to runtime
-                    // - await for runtime
-                    info!("Power Button pressed - shutting down now");
-                    power_off();
+        loop {
+            let event_slice = unsafe {
+                slice::from_raw_parts_mut(
+                    &mut event as *mut _ as *mut u8,
+                    event_size,
+                )
+            };
+            match event_file.read(event_slice) {
+                Ok(result) => {
+                    trace!("Event0: {} {:?}", result, event);
+                    if event.code == KEY_POWER {
+                        // TODO: shutdown runtime
+                        // - need to send signal via a channel to runtime
+                        // - await for runtime
+                        info!("Power Button pressed - shutting down now");
+                        power_off();
+                    }
+                }
+                Err(e) => {
+                    error!(
+                        "Could not parse event from {}: {}",
+                        power_btn_device.display(),
+                        e
+                    );
                 }
             }
-            Err(e) => {
-                error!(
-                    "Could not parse event from {}: {}",
-                    power_btn_device.display(),
-                    e
-                );
-            }
         }
-
     });
-
 }
