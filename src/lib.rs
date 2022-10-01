@@ -189,16 +189,14 @@ pub struct SystemRuntime {
 }
 
 impl SystemRuntime {
-
-    fn spawn_system_runtime_threads(&self){
-
+    fn spawn_system_runtime_threads(&self) {
         // ---- MAIN DAEMON THREAD POOL ----
         // TODO: https://github.com/aurae-runtime/auraed/issues/33
-        spawn_thread_power_button_listener(POWER_BUTTON_DEVICE);
+        spawn_thread_power_button_listener(POWER_BUTTON_DEVICE)
+            .expect("Could not start power button listener");
 
         // ---- MAIN DAEMON THREAD POOL ----
     }
-
 
     async fn init_pid1(&self) {
         print_logo();
@@ -212,7 +210,8 @@ impl SystemRuntime {
         trace!("configure network");
         // Show available network interfaces
         //show_dir("/sys/class/net/", false);
-        let (connection, handle, _) = new_connection().unwrap();
+        let (connection, handle, _) = new_connection()
+            .expect("expected to be able to start a new rtnetlink connection");
         tokio::spawn(connection);
 
         trace!("configure {}", LOOPBACK_DEV);

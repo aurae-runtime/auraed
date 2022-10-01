@@ -56,14 +56,14 @@ fn get_ip_type(ip: &Vec<u8>) -> Option<IpType> {
     None
 }
 
-pub fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
+fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
     fs::read_to_string(format!(
         "/sys/class/net/{}/device/sriov_totalvfs",
         iface
     ))
 }
 
-pub async fn set_link_up(
+pub(crate) async fn set_link_up(
     handle: Handle,
     iface: &str,
 ) -> Result<(), anyhow::Error> {
@@ -72,14 +72,14 @@ pub async fn set_link_up(
     if let Some(link) = links.try_next().await? {
         handle.link().set(link.header.index).up().execute().await?
     } else {
-        warn!("iface '{}' not found", iface);
+        return Err(anyhow!("iface '{}' not found", iface));
     }
     trace!("Set link {} up", iface);
     Ok(())
 }
 
 #[allow(dead_code)]
-pub async fn set_link_down(
+pub(crate) async fn set_link_down(
     handle: Handle,
     iface: &str,
 ) -> Result<(), anyhow::Error> {
@@ -88,13 +88,13 @@ pub async fn set_link_down(
     if let Some(link) = links.try_next().await? {
         handle.link().set(link.header.index).down().execute().await?
     } else {
-        warn!("iface '{}' not found", iface);
+        return Err(anyhow!("iface '{}' not found", iface));
     }
     trace!("Set link {} down", iface);
     Ok(())
 }
 
-pub async fn add_address_ipv6(
+pub(crate) async fn add_address_ipv6(
     iface: &str,
     ip: Ipv6Network,
     handle: rtnetlink::Handle,
@@ -112,7 +112,7 @@ pub async fn add_address_ipv6(
     Ok(())
 }
 
-pub async fn add_address_ipv4(
+pub(crate) async fn add_address_ipv4(
     iface: &str,
     ip: Ipv4Network,
     handle: rtnetlink::Handle,
@@ -132,24 +132,28 @@ pub async fn add_address_ipv4(
 
 // Create max(limit, max possible sriov for given iface) sriov devices for the given iface
 #[allow(dead_code)]
-pub fn setup_sriov(iface: &str, limit: u16) {
+pub(crate) fn setup_sriov(
+    iface: &str,
+    limit: u16,
+) -> Result<(), anyhow::Error> {
     if limit == 0 {
-        return;
+        return Ok(());
     }
 
     let sriov_totalvfs = match get_sriov_capabilities(iface) {
         Ok(val) => val,
         Err(e) => {
-            error!("sriov Error: failed to get sriov capabilities of device {}. {}", iface, e);
-            return;
+            return Err(anyhow!("sriov Error: failed to get sriov capabilities of device {}. {}", iface, e));
         }
     };
 
     let sriov_totalvfs = match sriov_totalvfs.trim_end().parse::<u16>() {
         Ok(val) => val,
         Err(e) => {
-            error!("sriov Error: failed to parse sriov capabilities. {}", e);
-            return;
+            return Err(anyhow!(
+                "sriov Error: failed to parse sriov capabilities. {}",
+                e
+            ));
         }
     };
 
@@ -160,9 +164,10 @@ pub fn setup_sriov(iface: &str, limit: u16) {
         num.to_string(),
     )
     .expect("Unable to write file");
+    Ok(())
 }
 
-pub async fn get_links(
+pub(crate) async fn get_links(
     handle: rtnetlink::Handle,
 ) -> Result<HashMap<u32, String>, anyhow::Error> {
     let mut result = HashMap::new();
@@ -181,17 +186,21 @@ pub async fn get_links(
     Ok(result)
 }
 
-fn convert_ipv4_to_string(ip: Vec<u8>) -> Result<String, anyhow::Error> {
+pub(crate) fn convert_ipv4_to_string(
+    ip: Vec<u8>,
+) -> Result<String, anyhow::Error> {
     if ip.len() != 4 {
-        return Err(anyhow!("Could not Convert vec: {:?} to ip string", ip));
+        return Err(anyhow!("Could not Convert vec: {:?} to ipv4 string", ip));
     }
     let ipv4 = Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]);
     Ok(ipv4.to_string())
 }
 
-fn convert_ipv6_to_string(ip: Vec<u8>) -> Result<String, anyhow::Error> {
+pub(crate) fn convert_ipv6_to_string(
+    ip: Vec<u8>,
+) -> Result<String, anyhow::Error> {
     if ip.len() != 16 {
-        return Err(anyhow!("Could not Convert vec: {:?} to ip string", ip));
+        return Err(anyhow!("Could not Convert vec: {:?} to ipv6 string", ip));
     }
 
     let a = ((ip[0] as u16) << 8) | ip[1] as u16;
@@ -208,10 +217,10 @@ fn convert_ipv6_to_string(ip: Vec<u8>) -> Result<String, anyhow::Error> {
     Ok(ipv6.to_string())
 }
 
-pub async fn dump_addresses(
+pub(crate) async fn dump_addresses(
     handle: rtnetlink::Handle,
     iface: &str,
-) -> Result<(), rtnetlink::Error> {
+) -> Result<(), anyhow::Error> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
     if let Some(link_msg) = links.try_next().await? {
         info!("{}:", iface);
@@ -255,7 +264,7 @@ pub async fn dump_addresses(
                             }
                         }
                         None => {
-                            error!("Failed to get ip type of {:?}", addr);
+                            warn!("Failed to get ip type of {:?}", addr);
                         }
                     }
                 }
@@ -263,12 +272,11 @@ pub async fn dump_addresses(
         }
         Ok(())
     } else {
-        error!("link {} not found", iface);
-        Ok(())
+        return Err(anyhow!("link {} not found", iface));
     }
 }
 
-pub async fn show_network_info(handle: rtnetlink::Handle) {
+pub(crate) async fn show_network_info(handle: rtnetlink::Handle) {
     info!("=== Network Interfaces ===");
 
     info!("Addresses:");
