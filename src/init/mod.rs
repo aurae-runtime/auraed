@@ -31,6 +31,7 @@
 pub(crate) mod fileio;
 pub(crate) mod network;
 
+use anyhow::anyhow;
 use log::{error, info, warn, Level};
 use std::ffi::CString;
 use std::ptr;
@@ -60,13 +61,17 @@ pub fn print_logo() {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
+fn mount_vfs(
+    source_name: &str,
+    target_name: &str,
+    fstype: &str,
+) -> anyhow::Result<()> {
     info!("Mounting {} as type {}", target_name, fstype);
 
     // CString constructor ensures the trailing 0byte, which is required by libc::mount
-    let src_c_ctr = CString::new(source_name).unwrap();
-    let target_name_c_ctr = CString::new(target_name).unwrap();
-    let fstype_c_ctr = CString::new(fstype).unwrap();
+    let src_c_ctr = CString::new(source_name)?;
+    let target_name_c_ctr = CString::new(target_name)?;
+    let fstype_c_ctr = CString::new(fstype)?;
 
     let ret = unsafe {
         libc::mount(
@@ -80,22 +85,28 @@ fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
 
     if ret < 0 {
         error!("Failed to mount ({})", ret);
-        let error = CString::new("Error: ").unwrap();
+        let error = CString::new("Error: ").expect("error creating CString");
         unsafe {
-            libc::perror(
-                error.as_ptr()
-            );
-        }
+            libc::perror(error.as_ptr());
+        };
+
+        Err(anyhow!("Failed to mount ({})", ret))
+    } else {
+        Ok(())
     }
 }
 
 #[cfg(target_os = "macos")]
-fn mount_vfs(source_name: &str, target_name: &str, _fstype: &str) {
+fn mount_vfs(
+    source_name: &str,
+    target_name: &str,
+    _fstype: &str,
+) -> anyhow::Result<()> {
     info!("Mounting {}", target_name);
 
     // CString constructor ensures the trailing 0byte, which is required by libc::mount
-    let src_c_ctr = CString::new(source_name).unwrap();
-    let target_name_c_ctr = CString::new(target_name).unwrap();
+    let src_c_ctr = CString::new(source_name)?;
+    let target_name_c_ctr = CString::new(target_name)?;
 
     let ret = unsafe {
         libc::mount(
@@ -108,12 +119,14 @@ fn mount_vfs(source_name: &str, target_name: &str, _fstype: &str) {
 
     if ret < 0 {
         error!("Failed to mount ({})", ret);
-        let error = CString::new("Error: ").unwrap();
+        let error = CString::new("Error: ").expect("error creating CString");
         unsafe {
-            libc::perror(
-                error.as_ptr()
-            );
-        }
+            libc::perror(error.as_ptr());
+        };
+
+        Err(anyhow!("Failed to mount ({})", ret))
+    } else {
+        Ok(())
     }
 }
 
@@ -123,9 +136,9 @@ pub fn init_rootfs() {
         return;
     }
 
-    mount_vfs("none", "/dev", "devtmpfs");
-    mount_vfs("none", "/sys", "sysfs");
-    mount_vfs("proc", "/proc", "proc");
+    mount_vfs("none", "/dev", "devtmpfs").unwrap();
+    mount_vfs("none", "/sys", "sysfs").unwrap();
+    mount_vfs("proc", "/proc", "proc").unwrap();
 }
 
 pub fn init_syslog_logging(logger_level: Level) {
