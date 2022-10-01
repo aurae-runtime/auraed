@@ -32,8 +32,10 @@ pub(crate) mod fileio;
 pub(crate) mod network;
 pub(crate) mod power;
 
+use anyhow::anyhow;
 use log::{error, info, warn, Level};
 use std::ffi::CString;
+use std::ptr;
 use syslog::{BasicLogger, Facility, Formatter3164};
 
 const AURAED_SYSLOG_NAME: &str = "auraed";
@@ -59,55 +61,53 @@ pub fn print_logo() {
     println!("{}", banner());
 }
 
-#[cfg(not(target_os = "macos"))]
-fn mount_vfs(source_name: &str, target_name: &str, fstype: &str) {
-    info!("Mounting {} as type {}", target_name, fstype);
-    unsafe {
-        // CString constructor ensures the trailing 0byte, which is required by libc::mount
-        let src_c_ctr = CString::new(source_name).unwrap();
-        let target_name_c_ctr = CString::new(target_name).unwrap();
-        let fstype_c_ctr = CString::new(fstype).unwrap();
-        let options_c_ctr = CString::new("").unwrap();
-
-        let ret = libc::mount(
-            src_c_ctr.as_ptr() as *const i8,
-            target_name_c_ctr.as_ptr() as *const i8,
-            fstype_c_ctr.as_ptr() as *const i8,
-            0,
-            options_c_ctr.as_ptr() as *const libc::c_void,
-        );
-
-        if ret < 0 {
-            error!("Failed to mount ({})", ret);
-            libc::perror(
-                String::from("Error: ").as_bytes().as_ptr() as *const i8
-            );
-        }
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn mount_vfs(source_name: &str, target_name: &str, _fstype: &str) {
+fn mount_vfs(
+    source_name: &str,
+    target_name: &str,
+    fstype: &str,
+) -> anyhow::Result<()> {
     info!("Mounting {}", target_name);
-    unsafe {
-        // CString constructor ensures the trailing 0byte, which is required by libc::mount
-        let src_c_ctr = CString::new(source_name).unwrap();
-        let target_name_c_ctr = CString::new(target_name).unwrap();
-        let options_c_ctr = CString::new("").unwrap();
 
-        let ret = libc::mount(
-            src_c_ctr.as_ptr() as *const i8,
-            target_name_c_ctr.as_ptr() as *const i8,
-            0,
-            options_c_ctr.as_ptr() as *mut libc::c_void,
-        );
+    // CString constructor ensures the trailing 0byte, which is required by libc::mount
+    let src_c_ctr = CString::new(source_name)?;
+    let target_name_c_ctr = CString::new(target_name)?;
 
-        if ret < 0 {
-            error!("Failed to mount ({})", ret);
-            libc::perror(
-                String::from("Error: ").as_bytes().as_ptr() as *const i8
-            );
+    let ret = {
+        #[cfg(not(target_os = "macos"))]
+        {
+            let fstype_c_ctr = CString::new(fstype)?;
+            unsafe {
+                libc::mount(
+                    src_c_ctr.as_ptr(),
+                    target_name_c_ctr.as_ptr(),
+                    fstype_c_ctr.as_ptr(),
+                    0,
+                    ptr::null(),
+                )
+            }
         }
+
+        #[cfg(target_os = "macos")]
+        unsafe {
+            libc::mount(
+                src_c_ctr.as_ptr(),
+                target_name_c_ctr.as_ptr(),
+                0,
+                ptr::null_mut(),
+            )
+        }
+    };
+
+    if ret < 0 {
+        error!("Failed to mount ({})", ret);
+        let error = CString::new("Error: ").expect("error creating CString");
+        unsafe {
+            libc::perror(error.as_ptr());
+        };
+
+        Err(anyhow!("Failed to mount ({})", ret))
+    } else {
+        Ok(())
     }
 }
 
@@ -117,9 +117,9 @@ pub(crate) fn init_rootfs() {
         return;
     }
 
-    mount_vfs("none", "/dev", "devtmpfs");
-    mount_vfs("none", "/sys", "sysfs");
-    mount_vfs("proc", "/proc", "proc");
+    mount_vfs("none", "/dev", "devtmpfs").unwrap();
+    mount_vfs("none", "/sys", "sysfs").unwrap();
+    mount_vfs("proc", "/proc", "proc").unwrap();
 }
 
 pub(crate) fn init_syslog_logging(logger_level: Level) {
