@@ -30,7 +30,7 @@
 
 use anyhow::anyhow;
 use futures::stream::TryStreamExt;
-use log::{error, info, warn, trace};
+use log::{error, info, trace, warn};
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str;
@@ -38,8 +38,8 @@ use std::{cmp, fs, io};
 
 use ipnetwork::{Ipv4Network, Ipv6Network};
 
-use rtnetlink::Handle;
 use netlink_packet_route::rtnl::link::nlas::Nla;
+use rtnetlink::Handle;
 
 #[derive(Eq, PartialEq)]
 enum IpType {
@@ -63,7 +63,10 @@ pub fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
     ))
 }
 
-pub async fn set_link_up(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
+pub async fn set_link_up(
+    handle: Handle,
+    iface: &str,
+) -> Result<(), anyhow::Error> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -76,7 +79,10 @@ pub async fn set_link_up(handle: Handle, iface: &str) -> Result<(), anyhow::Erro
 }
 
 #[allow(dead_code)]
-pub async fn set_link_down(handle: Handle, iface: &str) -> Result<(), anyhow::Error> {
+pub async fn set_link_down(
+    handle: Handle,
+    iface: &str,
+) -> Result<(), anyhow::Error> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -131,20 +137,20 @@ pub fn setup_sriov(iface: &str, limit: u16) {
         return;
     }
 
-    let sriov_totalvfs = match get_sriov_capabilities(iface){
+    let sriov_totalvfs = match get_sriov_capabilities(iface) {
         Ok(val) => val,
         Err(e) => {
             error!("sriov Error: failed to get sriov capabilities of device {}. {}", iface, e);
-            return
-        }  
+            return;
+        }
     };
 
-    let sriov_totalvfs = match sriov_totalvfs.trim_end().parse::<u16>(){
+    let sriov_totalvfs = match sriov_totalvfs.trim_end().parse::<u16>() {
         Ok(val) => val,
         Err(e) => {
             error!("sriov Error: failed to parse sriov capabilities. {}", e);
-            return
-        }  
+            return;
+        }
     };
 
     let num = cmp::min(limit, sriov_totalvfs);
@@ -155,7 +161,6 @@ pub fn setup_sriov(iface: &str, limit: u16) {
     )
     .expect("Unable to write file");
 }
-
 
 pub async fn get_links(
     handle: rtnetlink::Handle,

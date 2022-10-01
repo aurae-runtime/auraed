@@ -30,6 +30,7 @@
 
 pub(crate) mod fileio;
 pub(crate) mod network;
+pub(crate) mod power;
 
 use log::{error, info, warn, Level};
 use std::ffi::CString;

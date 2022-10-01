@@ -52,7 +52,8 @@ use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
 use crate::init::network::set_link_up;
-use crate::init::network::{add_address_ipv6, add_address_ipv4};
+use crate::init::network::{add_address_ipv4, add_address_ipv6};
+use crate::init::power::spawn_thread_power_button_listener;
 
 use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 
@@ -70,6 +71,18 @@ mod runtime;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 pub const LOOPBACK_DEV: &str = "lo";
+
+pub const LOOPBACK_IPV6: &str = "::1";
+pub const LOOPBACK_IPV6_SUBNET: &str = "/128";
+
+pub const LOOPBACK_IPV4: &str = "127.0.0.1";
+pub const LOOPBACK_IPV4_SUBNET: &str = "/8";
+
+pub const DEFAULT_NET_DEV: &str = "eth0";
+pub const DEFAULT_NET_DEV_IPV6: &str = "fe80::2";
+pub const DEFAULT_NET_DEV_IPV6_SUBNET: &str = "/64";
+
+pub const POWER_BUTTON_DEVICE: &str = "/dev/input/event0";
 
 #[derive(Debug)]
 pub struct AuraedRuntime {
@@ -176,6 +189,17 @@ pub struct SystemRuntime {
 }
 
 impl SystemRuntime {
+
+    fn spawn_system_runtime_threads(&self){
+
+        // ---- MAIN DAEMON THREAD POOL ----
+        // TODO: https://github.com/aurae-runtime/auraed/issues/33
+        spawn_thread_power_button_listener(POWER_BUTTON_DEVICE);
+
+        // ---- MAIN DAEMON THREAD POOL ----
+    }
+
+
     async fn init_pid1(&self) {
         print_logo();
 
@@ -184,10 +208,6 @@ impl SystemRuntime {
 
         trace!("Configure filesystem");
         init_rootfs();
-        // Show content of file-based kernel interface directories
-        //fileio::show_dir("/dev", false);
-        //fileio::show_dir("/sys", false);
-        //fileio::show_dir("/proc", false);
 
         trace!("configure network");
         // Show available network interfaces
@@ -196,32 +216,47 @@ impl SystemRuntime {
         tokio::spawn(connection);
 
         trace!("configure {}", LOOPBACK_DEV);
-        if let Ok(ipv6) = "::1/128".parse::<Ipv6Network>(){
-            if let Err(e) = add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await{
-                error!("{}",e);
+        if let Ok(ipv6) = format!("{}{}", LOOPBACK_IPV6, LOOPBACK_IPV6_SUBNET)
+            .parse::<Ipv6Network>()
+        {
+            if let Err(e) =
+                add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await
+            {
+                error!("{}", e);
             };
         };
-        if let Ok(ipv4) = "127.0.0.1/8".parse::<Ipv4Network>(){
-            if let Err(e) = add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await{
-                error!("{}",e);
+        if let Ok(ipv4) = format!("{}{}", LOOPBACK_IPV4, LOOPBACK_IPV4_SUBNET)
+            .parse::<Ipv4Network>()
+        {
+            if let Err(e) =
+                add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await
+            {
+                error!("{}", e);
             }
         };
 
-        if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await{
-            error!("{}",e);
+        if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await {
+            error!("{}", e);
         }
 
-        trace!("configure eth0");
-        if let Ok(ipv6) = "fe80::2/64".parse::<Ipv6Network>(){
-            if let Err(e) = add_address_ipv6("eth0", ipv6, handle.clone()).await{
-                error!("{}",e);
+        trace!("configure {}", DEFAULT_NET_DEV);
+        if let Ok(ipv6) =
+            format!("{}{}", DEFAULT_NET_DEV_IPV6, DEFAULT_NET_DEV_IPV6_SUBNET)
+                .parse::<Ipv6Network>()
+        {
+            if let Err(e) =
+                add_address_ipv6(DEFAULT_NET_DEV, ipv6, handle.clone()).await
+            {
+                error!("{}", e);
             }
         };
-        if let Err(e) = set_link_up(handle.clone(), "eth0").await{
-            error!("{}",e);
+        if let Err(e) = set_link_up(handle.clone(), DEFAULT_NET_DEV).await {
+            error!("{}", e);
         }
 
         show_network_info(handle).await;
+
+        self.spawn_system_runtime_threads();
 
         trace!("init of auraed as pid1 done");
     }
