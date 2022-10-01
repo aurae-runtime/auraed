@@ -29,6 +29,7 @@ cd        build
              --target-list=$QEMU_ARCH    \
              --disable-pa                \
              --disable-curl              \
+\ #          --disable-vnc               \
              --disable-curses            \
              --disable-iconv             \
              --disable-bochs             \
@@ -41,8 +42,6 @@ cd        build
              --disable-parallels         \
              --docdir=/usr/share/doc/qemu-7.1.0 \
              | tee /aurae/hack/qemu/configure-output.txt
-
-#             --disable-vnc               \
 
 
 unset QEMU_ARCH
