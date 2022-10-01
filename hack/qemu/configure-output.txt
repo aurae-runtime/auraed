@@ -1,0 +1,414 @@
+The Meson build system
+Version: 0.59.3
+Source dir: /tmp/qemu-build/qemu-7.1.0
+Build dir: /tmp/qemu-build/qemu-7.1.0/build
+Build type: native build
+Project name: qemu
+Project version: 7.1.0
+C compiler for the host machine: cc -m64 -mcx16 (gcc 10.2.1 "cc (Debian 10.2.1-6) 10.2.1 20210110")
+C linker for the host machine: cc -m64 -mcx16 ld.bfd 2.35.2
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Program scripts/symlink-install-tree.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/scripts/symlink-install-tree.py)
+Program sh found: YES (/bin/sh)
+Program python3 found: YES (/usr/bin/python3)
+WARNING: Broken python installation detected. Python files installed by Meson might not be found by python interpreter.
+Program bzip2 found: YES (/bin/bzip2)
+Program iasl found: NO
+C++ compiler for the host machine: c++ -m64 -mcx16 (gcc 10.2.1 "c++ (Debian 10.2.1-6) 10.2.1 20210110")
+C++ linker for the host machine: c++ -m64 -mcx16 ld.bfd 2.35.2
+Program cgcc found: NO
+Library m found: YES
+Run-time dependency threads found: YES
+Library util found: YES
+Run-time dependency appleframeworks found: NO (tried framework)
+Found pkg-config: /usr/bin/pkg-config (0.29.2)
+Run-time dependency gio-2.0 found: YES 2.66.8
+Program /usr/bin/gdbus-codegen found: YES (/usr/bin/gdbus-codegen)
+Run-time dependency gio-unix-2.0 found: YES 2.66.8
+Run-time dependency pixman-1 found: YES 0.40.0
+Run-time dependency zlib found: YES 1.2.11
+Has header "libaio.h" : NO 
+Run-time dependency liburing found: NO (tried pkgconfig)
+Run-time dependency libnfs found: NO (tried pkgconfig)
+Run-time dependency appleframeworks found: NO (tried framework)
+Run-time dependency appleframeworks found: NO (tried framework)
+Run-time dependency libseccomp found: NO (tried pkgconfig)
+Has header "cap-ng.h" : NO 
+Run-time dependency xkbcommon found: NO (tried pkgconfig)
+Has header "libvdeplug.h" : NO 
+Dependency libpulse skipped: feature pa disabled
+Run-time dependency alsa found: NO (tried pkgconfig)
+Run-time dependency jack found: NO (tried pkgconfig)
+Run-time dependency spice-protocol found: NO (tried pkgconfig)
+Run-time dependency spice-server found: NO (tried pkgconfig)
+Library rt found: YES
+Run-time dependency libiscsi found: NO (tried pkgconfig)
+Run-time dependency libzstd found: NO (tried pkgconfig)
+Run-time dependency virglrenderer found: NO (tried pkgconfig)
+Dependency libcurl skipped: feature curl disabled
+Run-time dependency libudev found: NO (tried pkgconfig)
+Library mpathpersist found: NO
+Has header "brlapi.h" : NO 
+sdl2-config found: NO
+Run-time dependency sdl2 found: NO (tried pkgconfig and config-tool)
+Library rados found: NO
+Has header "rbd/librbd.h" : NO 
+Run-time dependency glusterfs-api found: NO (tried pkgconfig)
+Run-time dependency libssh found: NO (tried pkgconfig)
+Has header "bzlib.h" : YES 
+Library bz2 found: YES
+Has header "lzfse.h" : NO 
+Has header "sys/soundcard.h" : YES 
+Run-time dependency epoxy found: NO (tried pkgconfig)
+Has header "epoxy/egl.h" with dependency not-found: NO 
+Run-time dependency gnutls found: NO (tried pkgconfig)
+Run-time dependency gnutls found: NO (tried pkgconfig)
+libgcrypt-config found: NO need ['>=1.8']
+Run-time dependency libgcrypt found: NO (tried config-tool)
+Run-time dependency nettle found: NO (tried pkgconfig)
+Run-time dependency gmp found: YES 6.2.1
+Run-time dependency gtk+-3.0 found: NO (tried pkgconfig)
+Run-time dependency libpng found: YES 1.6.37
+Run-time dependency libjpeg found: YES 2.0.6
+Has header "sasl/sasl.h" : NO 
+Has header "security/pam_appl.h" : NO 
+Has header "snappy-c.h" : NO 
+Has header "lzo/lzo1x.h" : NO 
+Has header "numa.h" : NO 
+Library ibumad found: NO
+Has header "rdma/rdma_cma.h" : NO 
+Library ibverbs found: NO
+Run-time dependency xencontrol found: NO (tried pkgconfig)
+Library xenstore found: NO
+Library xenctrl found: NO
+Library xendevicemodel found: NO
+Library xenforeignmemory found: NO
+Library xengnttab found: NO
+Library xenevtchn found: NO
+Library xentoolcore found: NO
+Run-time dependency libcacard found: NO (tried pkgconfig)
+Run-time dependency u2f-emu found: NO (tried pkgconfig)
+Run-time dependency canokey-qemu found: NO (tried pkgconfig)
+Run-time dependency libusbredirparser-0.5 found: NO (tried pkgconfig)
+Run-time dependency libusb-1.0 found: NO (tried pkgconfig)
+Run-time dependency libpmem found: NO (tried pkgconfig)
+Run-time dependency libdaxctl found: NO (tried pkgconfig)
+Run-time dependency libkeyutils found: NO (tried pkgconfig)
+Checking for function "gettid" : YES 
+Run-time dependency libselinux found: YES 3.1
+Run-time dependency fuse3 found: NO (tried pkgconfig)
+Run-time dependency libbpf found: NO (tried pkgconfig)
+Checking for function "io_uring_register_ring_fd" with dependency not-found: NO 
+Has header "sys/epoll.h" : YES 
+Has header "linux/magic.h" : YES 
+Has header "valgrind/valgrind.h" : NO 
+Has header "linux/btrfs.h" : YES 
+Has header "libdrm/drm.h" : NO 
+Has header "pty.h" : YES 
+Has header "sys/disk.h" : NO 
+Has header "sys/ioccom.h" : NO 
+Has header "sys/kcov.h" : NO 
+Checking for function "accept4" : YES 
+Checking for function "clock_adjtime" : YES 
+Checking for function "dup3" : YES 
+Checking for function "fallocate" : YES 
+Checking for function "posix_fallocate" : YES 
+Checking for function "posix_memalign" : YES 
+Checking for function "_aligned_malloc" : NO 
+Checking for function "valloc" : YES 
+Checking for function "memalign" : YES 
+Checking for function "ppoll" : YES 
+Checking for function "preadv" : YES 
+Checking for function "pthread_fchdir_np" : NO 
+Checking for function "sendfile" : YES 
+Checking for function "setns" : YES 
+Checking for function "unshare" : YES 
+Checking for function "syncfs" : YES 
+Checking for function "sync_file_range" : YES 
+Checking for function "timerfd_create" : YES 
+Checking for function "copy_file_range" : YES 
+Checking for function "getifaddrs" : YES 
+Checking for function "openpty" with dependency -lutil: YES 
+Checking for function "strchrnul" : YES 
+Checking for function "system" : YES 
+Header <byteswap.h> has symbol "bswap_32" : YES 
+Header <sys/epoll.h> has symbol "epoll_create1" : YES 
+Header <linux/falloc.h> has symbol "FALLOC_FL_PUNCH_HOLE" : YES 
+Header <linux/falloc.h> has symbol "FALLOC_FL_KEEP_SIZE" : YES 
+Header <linux/falloc.h> has symbol "FALLOC_FL_ZERO_RANGE" : YES 
+Has header "linux/fiemap.h" : YES 
+Header <linux/fs.h> has symbol "FS_IOC_FIEMAP" : YES 
+Checking for function "getrandom" : YES 
+Header <sys/random.h> has symbol "GRND_NONBLOCK" : YES 
+Header <sys/inotify.h> has symbol "inotify_init" : YES 
+Header <sys/inotify.h> has symbol "inotify_init1" : YES 
+Header <machine/bswap.h> has symbol "bswap32" : NO 
+Header <sys/prctl.h> has symbol "PR_SET_TIMERSLACK" : YES 
+Header <linux/rtnetlink.h> has symbol "IFLA_PROTO_DOWN" : YES 
+Header <sys/sysmacros.h> has symbol "makedev" : YES 
+Header <getopt.h> has symbol "optreset" : NO 
+Header <netinet/in.h> has symbol "IPPROTO_MPTCP" : NO 
+Header <sys/mount.h> has symbol "FSCONFIG_SET_FLAG" : NO 
+Checking whether type "struct sigevent" has member "sigev_notify_thread_id" : NO 
+Checking whether type "struct stat" has member "st_atim" : YES 
+Checking for type "struct iovec" : YES 
+Checking for type "struct utmpx" : YES 
+Checking for type "struct mmsghdr" : YES 
+Header <linux/vm_sockets.h> has symbol "AF_VSOCK" : YES 
+Program scripts/minikconf.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/scripts/minikconf.py)
+Configuring x86_64-softmmu-config-target.h using configuration
+Configuring x86_64-softmmu-config-devices.mak with command
+Reading depfile: /tmp/qemu-build/qemu-7.1.0/build/meson-private/x86_64-softmmu-config-devices.mak.d
+Configuring x86_64-softmmu-config-devices.h using configuration
+Program scripts/make-config-poison.sh found: YES (/tmp/qemu-build/qemu-7.1.0/scripts/make-config-poison.sh)
+Run-time dependency capstone found: NO (tried pkgconfig)
+Run-time dependency slirp found: NO (tried pkgconfig)
+Configuring libslirp-version.h using configuration
+Library fdt found: NO
+Configuring config-host.h using configuration
+Program scripts/hxtool found: YES (/tmp/qemu-build/qemu-7.1.0/scripts/hxtool)
+Program scripts/shaderinclude.pl found: YES (/usr/bin/env perl /tmp/qemu-build/qemu-7.1.0/scripts/shaderinclude.pl)
+Program scripts/qapi-gen.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/scripts/qapi-gen.py)
+Program scripts/qemu-version.sh found: YES (/tmp/qemu-build/qemu-7.1.0/scripts/qemu-version.sh)
+
+Executing subproject libvhost-user 
+
+libvhost-user| Project name: libvhost-user
+libvhost-user| Project version: undefined
+libvhost-user| C compiler for the host machine: cc -m64 -mcx16 (gcc 10.2.1 "cc (Debian 10.2.1-6) 10.2.1 20210110")
+libvhost-user| C linker for the host machine: cc -m64 -mcx16 ld.bfd 2.35.2
+libvhost-user| Dependency threads found: YES unknown (cached)
+libvhost-user| Dependency glib-2.0 found: YES 2.66.8 (overridden)
+libvhost-user| Build targets in project: 11
+libvhost-user| Subproject libvhost-user finished.
+
+
+Executing subproject libvduse 
+
+libvduse| Project name: libvduse
+libvduse| Project version: undefined
+libvduse| C compiler for the host machine: cc -m64 -mcx16 (gcc 10.2.1 "cc (Debian 10.2.1-6) 10.2.1 20210110")
+libvduse| C linker for the host machine: cc -m64 -mcx16 ld.bfd 2.35.2
+libvduse| Build targets in project: 12
+libvduse| Subproject libvduse finished.
+
+Program cat found: YES (/bin/cat)
+Program scripts/decodetree.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/scripts/decodetree.py)
+Program ../scripts/modules/module_block.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/block/../scripts/modules/module_block.py)
+Program ../scripts/block-coroutine-wrapper.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/block/../scripts/block-coroutine-wrapper.py)
+Program scripts/modinfo-collect.py found: YES (/tmp/qemu-build/qemu-7.1.0/scripts/modinfo-collect.py)
+Program scripts/modinfo-generate.py found: YES (/tmp/qemu-build/qemu-7.1.0/scripts/modinfo-generate.py)
+Program nm found: YES
+Program scripts/undefsym.py found: YES (/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/scripts/undefsym.py)
+Program scripts/feature_to_c.sh found: YES (/bin/sh /tmp/qemu-build/qemu-7.1.0/scripts/feature_to_c.sh)
+Configuring 50-edk2-i386-secure.json using configuration
+Configuring 50-edk2-x86_64-secure.json using configuration
+Configuring 60-edk2-aarch64.json using configuration
+Configuring 60-edk2-arm.json using configuration
+Configuring 60-edk2-i386.json using configuration
+Configuring 60-edk2-x86_64.json using configuration
+Program qemu-keymap found: NO
+Program cp found: YES (/bin/cp)
+Program sphinx-build-3 sphinx-build found: NO
+Program bash found: YES 5.1.4 (/bin/bash)
+Program diff found: YES (/usr/bin/diff)
+Program dbus-daemon found: NO
+Program initrd-stress.sh found: YES (/tmp/qemu-build/qemu-7.1.0/tests/migration/initrd-stress.sh)
+Build targets in project: 514
+
+qemu 7.1.0
+
+  Directories
+    Install prefix               : /aurae/target/rootfs/usr
+    BIOS directory               : share/qemu
+    firmware path                : share/qemu-firmware
+    binary directory             : /aurae/target/rootfs/usr/bin
+    library directory            : /aurae/target/rootfs/usr/lib/x86_64-linux-gnu
+    module directory             : lib/x86_64-linux-gnu/qemu
+    libexec directory            : /aurae/target/rootfs/usr/libexec
+    include directory            : /aurae/target/rootfs/usr/include
+    config directory             : /etc
+    local state directory        : /var
+    Manual directory             : /aurae/target/rootfs/usr/share/man
+    Doc directory                : /usr/share/doc/qemu-7.1.0
+    Build directory              : /tmp/qemu-build/qemu-7.1.0/build
+    Source path                  : /tmp/qemu-build/qemu-7.1.0
+    GIT submodules               : ui/keycodemapdb tests/fp/berkeley-testfloat-3 tests/fp/berkeley-softfloat-3 dtc slirp
+
+  Host binaries
+    git                          : git
+    make                         : make
+    python                       : /usr/bin/python3 (version: 3.9)
+    sphinx-build                 : NO
+    iasl                         : NO
+    genisoimage                  : 
+    smbd                         : /usr/sbin/smbd
+
+  Configurable features
+    Documentation                : NO
+    system-mode emulation        : YES
+    user-mode emulation          : NO
+    block layer                  : YES
+    Install blobs                : YES
+    module support               : NO
+    fuzzing support              : NO
+    Audio drivers                : oss
+    Trace backends               : log
+    D-Bus display                : NO
+    QOM debugging                : NO
+    vhost-kernel support         : YES
+    vhost-net support            : YES
+    vhost-user support           : YES
+    vhost-user-crypto support    : YES
+    vhost-user-blk server support: YES
+    vhost-vdpa support           : YES
+    build guest agent            : YES
+
+  Compilation
+    host CPU                     : x86_64
+    host endianness              : little
+    C compiler                   : cc -m64 -mcx16
+    Host C compiler              : cc -m64 -mcx16
+    C++ compiler                 : c++ -m64 -mcx16
+    CFLAGS                       : -O2 -g
+    CXXFLAGS                     : -O2 -g
+    QEMU_CFLAGS                  : -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wstrict-prototypes -Wredundant-decls -Wundef -Wwrite-strings -Wmissing-prototypes -fno-strict-aliasing -fno-common -fwrapv -Wold-style-declaration -Wold-style-definition -Wtype-limits -Wformat-security -Wformat-y2k -Winit-self -Wignored-qualifiers -Wempty-body -Wnested-externs -Wendif-labels -Wexpansion-to-defined -Wimplicit-fallthrough=2 -Wno-missing-include-dirs -Wno-shift-negative-value -Wno-psabi -fstack-protector-strong
+    QEMU_CXXFLAGS                : -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wundef -Wwrite-strings -fno-strict-aliasing -fno-common -fwrapv -Wtype-limits -Wformat-security -Wformat-y2k -Winit-self -Wignored-qualifiers -Wempty-body -Wendif-labels -Wexpansion-to-defined -Wimplicit-fallthrough=2 -Wno-missing-include-dirs -Wno-shift-negative-value -Wno-psabi -fstack-protector-strong
+    QEMU_OBJCFLAGS               : 
+    QEMU_LDFLAGS                 : -Wl,--warn-common -Wl,-z,relro -Wl,-z,now -fstack-protector-strong
+    profiler                     : NO
+    link-time optimization (LTO) : NO
+    PIE                          : YES
+    static build                 : NO
+    malloc trim support          : YES
+    membarrier                   : NO
+    debug stack usage            : NO
+    mutex debugging              : NO
+    memory allocator             : system
+    avx2 optimization            : YES
+    avx512f optimization         : NO
+    gprof enabled                : NO
+    gcov                         : NO
+    thread sanitizer             : NO
+    CFI support                  : NO
+    strip binaries               : NO
+    sparse                       : NO
+    mingw32 support              : NO
+
+  Cross compilers
+    x86_64                       : cc
+
+  Targets and accelerators
+    KVM support                  : YES
+    HAX support                  : NO
+    HVF support                  : NO
+    WHPX support                 : NO
+    NVMM support                 : NO
+    Xen support                  : NO
+    TCG support                  : YES
+    TCG backend                  : native (x86_64)
+    TCG plugins                  : YES
+    TCG debug enabled            : NO
+    target list                  : x86_64-softmmu
+    default devices              : YES
+    out of process emulation     : YES
+    vfio-user server             : NO
+
+  Block layer support
+    coroutine backend            : ucontext
+    coroutine pool               : YES
+    Block whitelist (rw)         : 
+    Block whitelist (ro)         : 
+    Use block whitelist in tools : NO
+    VirtFS support               : NO
+    build virtiofs daemon        : NO
+    Live block migration         : YES
+    replication support          : YES
+    bochs support                : NO
+    cloop support                : NO
+    dmg support                  : NO
+    qcow v1 support              : NO
+    vdi support                  : NO
+    vvfat support                : NO
+    qed support                  : NO
+    parallels support            : NO
+    FUSE exports                 : NO
+    VDUSE block exports          : YES
+
+  Crypto
+    TLS priority                 : NORMAL
+    GNUTLS support               : NO
+    libgcrypt                    : NO
+    nettle                       : NO
+    AF_ALG support               : NO
+    rng-none                     : NO
+    Linux keyring                : YES
+
+  Dependencies
+    SDL support                  : NO
+    SDL image support            : NO
+    GTK support                  : NO
+    pixman                       : YES 0.40.0
+    VTE support                  : NO
+    slirp support                : internal
+    libtasn1                     : NO
+    PAM                          : NO
+    iconv support                : NO
+    curses support               : NO
+    virgl support                : NO
+    curl support                 : NO
+    Multipath support            : NO
+    PNG support                  : YES 1.6.37
+    VNC support                  : YES
+    VNC SASL support             : NO
+    VNC JPEG support             : YES 2.0.6
+    OSS support                  : YES
+    ALSA support                 : NO
+    PulseAudio support           : NO
+    JACK support                 : NO
+    brlapi support               : NO
+    vde support                  : NO
+    netmap support               : NO
+    l2tpv3 support               : YES
+    Linux AIO support            : NO
+    Linux io_uring support       : NO
+    ATTR/XATTR support           : YES
+    RDMA support                 : NO
+    PVRDMA support               : NO
+    fdt support                  : internal
+    libcap-ng support            : NO
+    bpf support                  : NO
+    spice protocol support       : NO
+    rbd support                  : NO
+    smartcard support            : NO
+    U2F support                  : NO
+    libusb                       : NO
+    usb net redir                : NO
+    OpenGL support (epoxy)       : NO
+    GBM                          : NO
+    libiscsi support             : NO
+    libnfs support               : NO
+    seccomp support              : NO
+    GlusterFS support            : NO
+    TPM support                  : YES
+    libssh support               : NO
+    lzo support                  : NO
+    snappy support               : NO
+    bzip2 support                : YES
+    lzfse support                : NO
+    zstd support                 : NO
+    NUMA host support            : NO
+    capstone                     : NO
+    libpmem support              : NO
+    libdaxctl support            : NO
+    libudev                      : NO
+    FUSE lseek                   : NO
+    selinux                      : YES 3.1
+
+  Subprojects
+    libvduse                     : YES
+    libvhost-user                : YES
+
+Found ninja-1.10.1 at /usr/bin/ninja
+Running postconf script '/usr/bin/python3 /tmp/qemu-build/qemu-7.1.0/scripts/symlink-install-tree.py'

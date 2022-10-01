@@ -44,10 +44,13 @@ kernel:
 	mkdir -p target/rootfs/boot
 	docker run -it --rm -u $${UID} -v "`pwd`:/aurae" aurae-builder bash -c "cd hack/kernel && ./mk-kernel"
 
+qemu:
+	docker run -it --rm -u $${UID} -v "`pwd`:/aurae" aurae-builder bash -c "cd hack/qemu && ./mk-qemu"
+
 menuconfig:
 	docker run -it --rm -u $${UID} -v "`pwd`:/aurae" aurae-builder bash -c "cd hack/kernel && ./mk-menuconfig"
 
-initramfs: container-release
+initramfs: container-release qemu
 	mkdir -p target/rootfs/bin
 	mkdir -p target/rootfs/etc/aurae
 	cp target/release/auraed target/rootfs/bin/auraed

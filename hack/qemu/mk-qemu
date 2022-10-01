@@ -1,0 +1,54 @@
+#!/bin/bash
+set -e
+set -x
+
+TARGET_DIR=/aurae/target/rootfs/usr
+[ -f "${TARGET_DIR}/bin/qemu-system-x86_64" ] && 
+[ -z ${REBUILD_QEMU+x} ] &&
+    echo -e "Skip qemu build, artifacts already exist." &&
+    echo -e "\t clean qemu artifacts if you want to rebuild." &&
+    exit 0
+
+workingDir=/tmp/qemu-build
+mkdir -p $workingDir
+pushd $workingDir
+
+wget https://download.qemu-project.org/qemu-7.1.0.tar.xz
+tar xvf qemu-7.1.0.tar.xz
+cd qemu-7.1.0
+
+QEMU_ARCH=x86_64-softmmu
+
+mkdir -vp build
+cd        build
+
+../configure --help > /aurae/hack/qemu/configure-help.txt
+../configure --prefix=$TARGET_DIR        \
+             --sysconfdir=/etc           \
+             --localstatedir=/var        \
+             --target-list=$QEMU_ARCH    \
+             --disable-pa                \
+             --disable-curl              \
+             --disable-curses            \
+             --disable-iconv             \
+             --disable-bochs             \
+             --disable-dmg               \
+             --disable-cloop             \
+             --disable-vdi               \
+             --disable-qcow1             \
+             --disable-vvfat             \
+             --disable-qed               \
+             --disable-parallels         \
+             --docdir=/usr/share/doc/qemu-7.1.0 \
+             | tee /aurae/hack/qemu/configure-output.txt
+
+#             --disable-vnc               \
+
+
+unset QEMU_ARCH
+
+make -j`nproc`
+
+make install
+
+popd #workingDir
