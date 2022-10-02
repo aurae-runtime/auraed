@@ -30,6 +30,7 @@
 
 use std::fs::{read_dir, ReadDir};
 
+use anyhow::anyhow;
 use walkdir::WalkDir;
 
 fn print_flat_dir(paths: ReadDir) {
@@ -42,13 +43,19 @@ fn print_flat_dir(paths: ReadDir) {
 }
 
 #[allow(dead_code)]
-pub fn show_dir(dir: &str, recurse: bool) {
+pub(crate) fn show_dir(dir: &str, recurse: bool) -> anyhow::Result<()> {
     if recurse {
         for entry in WalkDir::new(dir) {
             let entry = entry;
             match entry {
                 Ok(p) => println!("{}", p.path().display()),
-                Err(e) => println!("Could not read {}. Error: {}", dir, e),
+                Err(e) => {
+                    return Err(anyhow!(
+                        "Could not read {}. Error: {}",
+                        dir,
+                        e
+                    ));
+                }
             }
         }
     } else {
@@ -56,7 +63,10 @@ pub fn show_dir(dir: &str, recurse: bool) {
 
         match paths {
             Ok(paths) => print_flat_dir(paths),
-            Err(e) => println!("Could not read {}. Error: {}", dir, e),
+            Err(e) => {
+                return Err(anyhow!("Could not read {}. Error: {}", dir, e));
+            }
         }
     }
+    Ok(())
 }

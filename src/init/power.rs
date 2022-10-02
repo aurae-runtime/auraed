@@ -28,7 +28,8 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-use log::{error, info, trace};
+use anyhow::anyhow;
+use log::{info, trace};
 use std::{
     fs::{File, OpenOptions},
     io::Read,
@@ -40,24 +41,24 @@ use std::{
 extern crate libc;
 
 #[allow(dead_code)]
-fn syscall_reboot(action: i32) {
+pub(crate) fn syscall_reboot(action: i32) {
     unsafe {
         libc::reboot(action);
     }
 }
 
-pub fn power_off() {
+pub(crate) fn power_off() {
     syscall_reboot(libc::LINUX_REBOOT_CMD_POWER_OFF);
 }
 
 #[allow(dead_code)]
-pub fn reboot() {
+pub(crate) fn reboot() {
     syscall_reboot(libc::LINUX_REBOOT_CMD_RESTART);
 }
 
 #[derive(Debug, Default, Copy, Clone)]
 #[repr(C, packed)]
-pub struct InputEvent {
+pub(crate) struct InputEvent {
     tv_sec: u64,
     tv_usec: u64,
     evtype: u16,
@@ -68,8 +69,9 @@ pub struct InputEvent {
 // see  https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/input-event-codes.h#L191
 const KEY_POWER: u16 = 116;
 
-
-pub fn spawn_thread_power_button_listener(power_btn_device_path: &str) {
+pub(crate) fn spawn_thread_power_button_listener(
+    power_btn_device_path: &str,
+) -> anyhow::Result<()> {
     let power_btn_device_path = power_btn_device_path.to_string();
     let mut file_options = OpenOptions::new();
     file_options.read(true);
@@ -80,12 +82,11 @@ pub fn spawn_thread_power_button_listener(power_btn_device_path: &str) {
     match file_options.open(&power_btn_device_path) {
         Ok(f) => event_file = f,
         Err(e) => {
-            error!(
+            return Err(anyhow!(
                 "Could not open power button device {}. {:?}",
-                power_btn_device_path, e
-            );
-            error!("Stopping acpi power button listener.");
-            return;
+                power_btn_device_path,
+                e
+            ));
         }
     }
 
@@ -114,13 +115,14 @@ pub fn spawn_thread_power_button_listener(power_btn_device_path: &str) {
                     }
                 }
                 Err(e) => {
-                    error!(
-                        "Could not parse event from {}: {}",
+                    return Err::<(), anyhow::Error>(anyhow!(
+                        "Could not parse event from {}: {:?}",
                         power_btn_device.display(),
                         e
-                    );
+                    ));
                 }
             }
         }
     });
+    Ok(())
 }

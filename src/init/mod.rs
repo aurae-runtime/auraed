@@ -111,7 +111,7 @@ fn mount_vfs(
     }
 }
 
-pub fn init_rootfs() {
+pub(crate) fn init_rootfs() {
     if get_pid() != 1 {
         warn!("Trying to initialize rootfs but auraed is not run as pid1. Abort setup of rootfs.");
         return;
@@ -122,7 +122,7 @@ pub fn init_rootfs() {
     mount_vfs("proc", "/proc", "proc").unwrap();
 }
 
-pub fn init_syslog_logging(logger_level: Level) {
+pub(crate) fn init_syslog_logging(logger_level: Level) {
     // Syslog formatter
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
@@ -160,7 +160,7 @@ pub fn init_syslog_logging(logger_level: Level) {
 //      other than fullfill the requirement of syslog crate.
 //      For now, auraed distinguishes between pid1 system and local (dev environment) logging.
 //      [1] https://docs.rs/syslog/latest/src/syslog/lib.rs.html#232-243
-pub fn init_pid1_logging(logger_level: Level) {
+pub(crate) fn init_pid1_logging(logger_level: Level) {
     // Initialize the logger
     let logger_simple = simplelog::SimpleLogger::new(
         logger_level.to_level_filter(),
