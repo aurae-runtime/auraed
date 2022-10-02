@@ -194,8 +194,17 @@ impl SystemRuntime {
     fn spawn_system_runtime_threads(&self) {
         // ---- MAIN DAEMON THREAD POOL ----
         // TODO: https://github.com/aurae-runtime/auraed/issues/33
-        spawn_thread_power_button_listener(POWER_BUTTON_DEVICE)
-            .expect("Could not start power button listener");
+        match spawn_thread_power_button_listener(POWER_BUTTON_DEVICE) {
+            Ok(_) => {
+                info!("Spawned power button device listener");
+            }
+            Err(e) => {
+                error!(
+                    "Failed to spawn power button device listener. Error={}",
+                    e
+                );
+            }
+        }
 
         // ---- MAIN DAEMON THREAD POOL ----
     }
