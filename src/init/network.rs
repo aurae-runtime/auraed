@@ -66,7 +66,7 @@ fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
 pub(crate) async fn set_link_up(
     handle: Handle,
     iface: &str,
-) -> Result<(), anyhow::Error> {
+) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -82,7 +82,7 @@ pub(crate) async fn set_link_up(
 pub(crate) async fn set_link_down(
     handle: Handle,
     iface: &str,
-) -> Result<(), anyhow::Error> {
+) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -98,7 +98,7 @@ pub(crate) async fn add_address_ipv6(
     iface: &str,
     ip: Ipv6Network,
     handle: rtnetlink::Handle,
-) -> Result<(), anyhow::Error> {
+) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -116,7 +116,7 @@ pub(crate) async fn add_address_ipv4(
     iface: &str,
     ip: Ipv4Network,
     handle: rtnetlink::Handle,
-) -> Result<(), anyhow::Error> {
+) ->  anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -135,7 +135,7 @@ pub(crate) async fn add_address_ipv4(
 pub(crate) fn setup_sriov(
     iface: &str,
     limit: u16,
-) -> Result<(), anyhow::Error> {
+) -> anyhow::Result<()> {
     if limit == 0 {
         return Ok(());
     }
@@ -169,7 +169,7 @@ pub(crate) fn setup_sriov(
 
 pub(crate) async fn get_links(
     handle: rtnetlink::Handle,
-) -> Result<HashMap<u32, String>, anyhow::Error> {
+) -> anyhow::Result<HashMap<u32, String>>{
     let mut result = HashMap::new();
     let mut links = handle.link().get().execute();
 
@@ -188,7 +188,7 @@ pub(crate) async fn get_links(
 
 pub(crate) fn convert_ipv4_to_string(
     ip: Vec<u8>,
-) -> Result<String, anyhow::Error> {
+) -> anyhow::Result<String> {
     if ip.len() != 4 {
         return Err(anyhow!("Could not Convert vec: {:?} to ipv4 string", ip));
     }
@@ -198,7 +198,7 @@ pub(crate) fn convert_ipv4_to_string(
 
 pub(crate) fn convert_ipv6_to_string(
     ip: Vec<u8>,
-) -> Result<String, anyhow::Error> {
+) -> anyhow::Result<String> {
     if ip.len() != 16 {
         return Err(anyhow!("Could not Convert vec: {:?} to ipv6 string", ip));
     }
@@ -220,7 +220,7 @@ pub(crate) fn convert_ipv6_to_string(
 pub(crate) async fn dump_addresses(
     handle: rtnetlink::Handle,
     iface: &str,
-) -> Result<(), anyhow::Error> {
+) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
     if let Some(link_msg) = links.try_next().await? {
         info!("{}:", iface);

@@ -71,7 +71,7 @@ const KEY_POWER: u16 = 116;
 
 pub(crate) fn spawn_thread_power_button_listener(
     power_btn_device_path: &str,
-) -> Result<(), anyhow::Error> {
+) -> anyhow::Result<()> {
     let power_btn_device_path = power_btn_device_path.to_string();
     let mut file_options = OpenOptions::new();
     file_options.read(true);

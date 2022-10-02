@@ -43,7 +43,7 @@ fn print_flat_dir(paths: ReadDir) {
 }
 
 #[allow(dead_code)]
-pub(crate) fn show_dir(dir: &str, recurse: bool) -> Result<(), anyhow::Error> {
+pub(crate) fn show_dir(dir: &str, recurse: bool) -> anyhow::Result<()> {
     if recurse {
         for entry in WalkDir::new(dir) {
             let entry = entry;
