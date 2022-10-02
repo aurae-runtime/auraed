@@ -37,7 +37,9 @@ use init::init_syslog_logging;
 use init::network::show_network_info;
 use init::print_logo;
 use log::*;
+use netlink_packet_route::RtnlMessage;
 use rtnetlink::new_connection;
+use rtnetlink::proto::Connection;
 use sea_orm::ConnectOptions;
 use sea_orm::ConnectionTrait;
 use sea_orm::Database;
@@ -198,20 +200,11 @@ impl SystemRuntime {
         // ---- MAIN DAEMON THREAD POOL ----
     }
 
-    async fn init_pid1(&self) {
-        print_logo();
-
-        init_pid1_logging(self.logger_level);
-        trace!("Logging started");
-
-        trace!("Configure filesystem");
-        init_rootfs();
-
-        trace!("configure network");
-        // Show available network interfaces
-        //show_dir("/sys/class/net/", false);
-        let (connection, handle, _) = new_connection()
-            .expect("expected to be able to start a new rtnetlink connection");
+    async fn init_pid1_network(
+        &self,
+        connection: Connection<RtnlMessage>,
+        handle: rtnetlink::Handle,
+    ) {
         tokio::spawn(connection);
 
         trace!("configure {}", LOOPBACK_DEV);
@@ -254,6 +247,27 @@ impl SystemRuntime {
         }
 
         show_network_info(handle).await;
+    }
+
+    async fn init_pid1(&self) {
+        print_logo();
+
+        init_pid1_logging(self.logger_level);
+        trace!("Logging started");
+
+        trace!("Configure filesystem");
+        init_rootfs();
+
+        trace!("configure network");
+        //show_dir("/sys/class/net/", false); // Show available network interfaces
+        match new_connection() {
+            Ok(val) => {
+                self.init_pid1_network(val.0, val.1).await;
+            }
+            Err(e) => {
+                error!("Could not initialize network! Error={}", e);
+            }
+        };
 
         self.spawn_system_runtime_threads();
 

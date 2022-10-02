@@ -116,7 +116,7 @@ pub(crate) async fn add_address_ipv4(
     iface: &str,
     ip: Ipv4Network,
     handle: rtnetlink::Handle,
-) ->  anyhow::Result<()> {
+) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
@@ -132,10 +132,7 @@ pub(crate) async fn add_address_ipv4(
 
 // Create max(limit, max possible sriov for given iface) sriov devices for the given iface
 #[allow(dead_code)]
-pub(crate) fn setup_sriov(
-    iface: &str,
-    limit: u16,
-) -> anyhow::Result<()> {
+pub(crate) fn setup_sriov(iface: &str, limit: u16) -> anyhow::Result<()> {
     if limit == 0 {
         return Ok(());
     }
@@ -169,7 +166,7 @@ pub(crate) fn setup_sriov(
 
 pub(crate) async fn get_links(
     handle: rtnetlink::Handle,
-) -> anyhow::Result<HashMap<u32, String>>{
+) -> anyhow::Result<HashMap<u32, String>> {
     let mut result = HashMap::new();
     let mut links = handle.link().get().execute();
 
@@ -186,9 +183,7 @@ pub(crate) async fn get_links(
     Ok(result)
 }
 
-pub(crate) fn convert_ipv4_to_string(
-    ip: Vec<u8>,
-) -> anyhow::Result<String> {
+pub(crate) fn convert_ipv4_to_string(ip: Vec<u8>) -> anyhow::Result<String> {
     if ip.len() != 4 {
         return Err(anyhow!("Could not Convert vec: {:?} to ipv4 string", ip));
     }
@@ -196,9 +191,7 @@ pub(crate) fn convert_ipv4_to_string(
     Ok(ipv4.to_string())
 }
 
-pub(crate) fn convert_ipv6_to_string(
-    ip: Vec<u8>,
-) -> anyhow::Result<String> {
+pub(crate) fn convert_ipv6_to_string(ip: Vec<u8>) -> anyhow::Result<String> {
     if ip.len() != 16 {
         return Err(anyhow!("Could not Convert vec: {:?} to ipv6 string", ip));
     }
