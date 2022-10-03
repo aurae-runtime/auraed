@@ -30,6 +30,7 @@
 
 #![warn(clippy::unwrap_used)]
 
+use anyhow::anyhow;
 use anyhow::Context;
 use init::init_pid1_logging;
 use init::init_rootfs;
@@ -53,11 +54,12 @@ use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
+use crate::init::network::add_route_v6;
 use crate::init::network::set_link_up;
 use crate::init::network::{add_address_ipv4, add_address_ipv6};
 use crate::init::power::spawn_thread_power_button_listener;
 
-use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
+use ipnetwork::{Ipv4Network, Ipv6Network};
 
 // use crate::init::fileio::show_dir;
 use crate::observe::observe_server::ObserveServer;
@@ -209,21 +211,17 @@ impl SystemRuntime {
         // ---- MAIN DAEMON THREAD POOL ----
     }
 
-    async fn init_pid1_network(
+    async fn configure_loopback(
         &self,
-        connection: Connection<RtnlMessage>,
         handle: rtnetlink::Handle,
-    ) {
-        tokio::spawn(connection);
-
-        trace!("configure {}", LOOPBACK_DEV);
+    ) -> anyhow::Result<()> {
         if let Ok(ipv6) = format!("{}{}", LOOPBACK_IPV6, LOOPBACK_IPV6_SUBNET)
             .parse::<Ipv6Network>()
         {
             if let Err(e) =
                 add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await
             {
-                error!("{}", e);
+                return Err(anyhow!("Failed to add ipv6 address to loopback device {}. Error={}", LOOPBACK_DEV, e));
             };
         };
         if let Ok(ipv4) = format!("{}{}", LOOPBACK_IPV4, LOOPBACK_IPV4_SUBNET)
@@ -232,15 +230,26 @@ impl SystemRuntime {
             if let Err(e) =
                 add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await
             {
-                error!("{}", e);
+                return Err(anyhow!("Failed to add ipv4 address to loopback device {}. Error={}", LOOPBACK_DEV, e));
             }
         };
 
         if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await {
-            error!("{}", e);
+            return Err(anyhow!(
+                "Failed to set link up for device {}. Error={}",
+                LOOPBACK_DEV,
+                e
+            ));
         }
 
-        trace!("configure {}", DEFAULT_NET_DEV);
+        Ok(())
+    }
+
+    // TODO: design network config struct
+    async fn configure_nic(
+        &self,
+        handle: rtnetlink::Handle,
+    ) -> anyhow::Result<()> {
         if let Ok(ipv6) =
             format!("{}{}", DEFAULT_NET_DEV_IPV6, DEFAULT_NET_DEV_IPV6_SUBNET)
                 .parse::<Ipv6Network>()
@@ -248,11 +257,67 @@ impl SystemRuntime {
             if let Err(e) =
                 add_address_ipv6(DEFAULT_NET_DEV, ipv6, handle.clone()).await
             {
-                error!("{}", e);
+                return Err(anyhow!(
+                    "Failed to add ipv6 address to device {}. Error={}",
+                    DEFAULT_NET_DEV,
+                    e
+                ));
+            }
+
+            if let Err(e) = set_link_up(handle.clone(), DEFAULT_NET_DEV).await {
+                return Err(anyhow!(
+                    "Failed to set link up for device {}. Error={}",
+                    DEFAULT_NET_DEV,
+                    e
+                ));
+            }
+
+            if let Ok(destv6) = "::/0".to_string().parse::<Ipv6Network>() {
+                if let Err(e) =
+                    add_route_v6(&destv6, DEFAULT_NET_DEV, ipv6, handle.clone())
+                        .await
+                {
+                    return Err(anyhow!(
+                        "Failed to add ipv6 route to device {}. Error={}",
+                        DEFAULT_NET_DEV,
+                        e
+                    ));
+                }
             }
         };
-        if let Err(e) = set_link_up(handle.clone(), DEFAULT_NET_DEV).await {
-            error!("{}", e);
+
+        Ok(())
+    }
+
+    async fn init_pid1_network(
+        &self,
+        connection: Connection<RtnlMessage>,
+        handle: rtnetlink::Handle,
+    ) {
+        tokio::spawn(connection);
+
+        trace!("configure {}", LOOPBACK_DEV);
+        match self.configure_loopback(handle.clone()).await {
+            Ok(_) => {
+                info!("Successfully configured {}", LOOPBACK_DEV);
+            }
+            Err(e) => {
+                error!("Failed to setup loopback device. Error={}", e);
+            }
+        }
+
+        trace!("configure {}", DEFAULT_NET_DEV);
+
+        match self.configure_nic(handle.clone()).await {
+            Ok(_) => {
+                info!("Successfully configured {}", DEFAULT_NET_DEV);
+            }
+            Err(e) => {
+                error!(
+                    "Failed to configure NIC {}. Error={}",
+                    DEFAULT_NET_DEV, e
+                );
+            }
         }
 
         show_network_info(handle).await;
