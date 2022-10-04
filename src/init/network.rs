@@ -30,13 +30,15 @@
 
 use anyhow::anyhow;
 use futures::stream::TryStreamExt;
+use ipnetwork::{Ipv4Network, Ipv6Network};
 use log::{error, info, trace, warn};
+use netlink_packet_route::LinkMessage;
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str;
+use std::thread;
+use std::time::Duration;
 use std::{cmp, fs, io};
-
-use ipnetwork::{Ipv4Network, Ipv6Network};
 
 use netlink_packet_route::rtnl::link::nlas::Nla;
 use rtnetlink::Handle;
@@ -74,7 +76,13 @@ pub(crate) async fn set_link_up(
     } else {
         return Err(anyhow!("iface '{}' not found", iface));
     }
-    trace!("Set link {} up", iface);
+
+    // TODO: replace sleep with an await mechanism that checks if device is up (with a timeout)
+    // TODO: https://github.com/aurae-runtime/auraed/issues/40
+    info!("Waiting for link '{}' to become up", iface);
+    thread::sleep(Duration::from_secs(3));
+    info!("Waited 3 seconds, assuming link '{}' is up", iface);
+
     Ok(())
 }
 
@@ -183,6 +191,94 @@ pub(crate) async fn get_links(
     Ok(result)
 }
 
+async fn get_link_msg(
+    iface: &str,
+    handle: Handle,
+) -> anyhow::Result<LinkMessage> {
+    match handle
+        .link()
+        .get()
+        .match_name(iface.to_string())
+        .execute()
+        .try_next()
+        .await
+    {
+        Ok(link_msg) => match link_msg {
+            Some(val) => {
+                return Ok(val);
+            }
+            None => {
+                return Err(anyhow!(
+                    "Could not retreive link message. Does not exist"
+                ));
+            }
+        },
+        Err(e) => {
+            return Err(anyhow!(
+                "Could not retreive link message. Error={}",
+                e
+            ));
+        }
+    }
+}
+
+async fn get_iface_idx(iface: &str, handle: Handle) -> anyhow::Result<u32> {
+    match get_link_msg(iface, handle.clone()).await {
+        Ok(link_msg) => {
+            return Ok(link_msg.header.index);
+        }
+        Err(e) => return Err(e),
+    }
+}
+
+#[allow(dead_code)]
+pub(crate) async fn add_route_v6(
+    dest: &Ipv6Network,
+    iface: &str,
+    source: Ipv6Network,
+    handle: Handle,
+) -> anyhow::Result<()> {
+    match get_iface_idx(iface, handle.clone()).await {
+        Ok(iface_idx) => {
+            handle
+                .route()
+                .add()
+                .v6()
+                .destination_prefix(dest.ip(), dest.prefix())
+                .output_interface(iface_idx)
+                .pref_source(source.ip())
+                .execute()
+                .await?;
+        }
+        Err(e) => return Err(e),
+    }
+    Ok(())
+}
+
+#[allow(dead_code)]
+pub(crate) async fn add_route_v4(
+    dest: &Ipv4Network,
+    iface: &str,
+    source: Ipv4Network,
+    handle: Handle,
+) -> anyhow::Result<()> {
+    match get_iface_idx(iface, handle.clone()).await {
+        Ok(iface_idx) => {
+            handle
+                .route()
+                .add()
+                .v4()
+                .destination_prefix(dest.ip(), dest.prefix())
+                .output_interface(iface_idx)
+                .pref_source(source.ip())
+                .execute()
+                .await?;
+        }
+        Err(e) => return Err(e),
+    }
+    Ok(())
+}
+
 pub(crate) fn convert_ipv4_to_string(ip: Vec<u8>) -> anyhow::Result<String> {
     if ip.len() != 4 {
         return Err(anyhow!("Could not Convert vec: {:?} to ipv4 string", ip));
@@ -278,7 +374,12 @@ pub(crate) async fn show_network_info(handle: rtnetlink::Handle) {
     match links_result {
         Ok(links) => {
             for (_, iface) in links {
-                dump_addresses(handle.clone(), &iface).await.unwrap();
+                if let Err(e) = dump_addresses(handle.clone(), &iface).await {
+                    error!(
+                        "Could not dump addresses for iface {}. Error={}",
+                        iface, e
+                    );
+                };
             }
         }
         Err(e) => {
