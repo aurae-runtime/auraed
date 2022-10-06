@@ -30,11 +30,11 @@
 
 use anyhow::anyhow;
 use futures::stream::TryStreamExt;
-use ipnetwork::{Ipv4Network, Ipv6Network};
+use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network};
 use log::{error, info, trace, warn};
 use netlink_packet_route::LinkMessage;
 use std::collections::HashMap;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
 use std::str;
 use std::thread;
 use std::time::Duration;
@@ -42,21 +42,6 @@ use std::{cmp, fs, io};
 
 use netlink_packet_route::rtnl::link::nlas::Nla;
 use rtnetlink::Handle;
-
-#[derive(Eq, PartialEq)]
-enum IpType {
-    V6,
-    V4,
-}
-
-fn get_ip_type(ip: &Vec<u8>) -> Option<IpType> {
-    if ip.len() == 4 {
-        return Some(IpType::V4);
-    } else if ip.len() == 16 {
-        return Some(IpType::V6);
-    }
-    None
-}
 
 fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
     fs::read_to_string(format!(
@@ -102,35 +87,19 @@ pub(crate) async fn set_link_down(
     Ok(())
 }
 
-pub(crate) async fn add_address_ipv6(
+pub(crate) async fn add_address(
     iface: &str,
-    ip: Ipv6Network,
-    handle: rtnetlink::Handle,
+    ip: impl Into<IpNetwork>,
+    handle: Handle,
 ) -> anyhow::Result<()> {
+    let ip = ip.into();
+
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
 
     if let Some(link) = links.try_next().await? {
         handle
             .address()
-            .add(link.header.index, std::net::IpAddr::V6(ip.ip()), ip.prefix())
-            .execute()
-            .await?
-    }
-    trace!("Added address to link {}", iface);
-    Ok(())
-}
-
-pub(crate) async fn add_address_ipv4(
-    iface: &str,
-    ip: Ipv4Network,
-    handle: rtnetlink::Handle,
-) -> anyhow::Result<()> {
-    let mut links = handle.link().get().match_name(iface.to_string()).execute();
-
-    if let Some(link) = links.try_next().await? {
-        handle
-            .address()
-            .add(link.header.index, std::net::IpAddr::V4(ip.ip()), ip.prefix())
+            .add(link.header.index, ip.ip(), ip.prefix())
             .execute()
             .await?
     }
@@ -173,7 +142,7 @@ pub(crate) fn setup_sriov(iface: &str, limit: u16) -> anyhow::Result<()> {
 }
 
 pub(crate) async fn get_links(
-    handle: rtnetlink::Handle,
+    handle: Handle,
 ) -> anyhow::Result<HashMap<u32, String>> {
     let mut result = HashMap::new();
     let mut links = handle.link().get().execute();
@@ -204,30 +173,19 @@ async fn get_link_msg(
         .await
     {
         Ok(link_msg) => match link_msg {
-            Some(val) => {
-                return Ok(val);
-            }
+            Some(val) => Ok(val),
             None => {
-                return Err(anyhow!(
-                    "Could not retreive link message. Does not exist"
-                ));
+                Err(anyhow!("Could not retreive link message. Does not exist"))
             }
         },
-        Err(e) => {
-            return Err(anyhow!(
-                "Could not retreive link message. Error={}",
-                e
-            ));
-        }
+        Err(e) => Err(anyhow!("Could not retreive link message. Error={}", e)),
     }
 }
 
 async fn get_iface_idx(iface: &str, handle: Handle) -> anyhow::Result<u32> {
     match get_link_msg(iface, handle.clone()).await {
-        Ok(link_msg) => {
-            return Ok(link_msg.header.index);
-        }
-        Err(e) => return Err(e),
+        Ok(link_msg) => Ok(link_msg.header.index),
+        Err(e) => Err(e),
     }
 }
 
@@ -279,35 +237,8 @@ pub(crate) async fn add_route_v4(
     Ok(())
 }
 
-pub(crate) fn convert_ipv4_to_string(ip: Vec<u8>) -> anyhow::Result<String> {
-    if ip.len() != 4 {
-        return Err(anyhow!("Could not Convert vec: {:?} to ipv4 string", ip));
-    }
-    let ipv4 = Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]);
-    Ok(ipv4.to_string())
-}
-
-pub(crate) fn convert_ipv6_to_string(ip: Vec<u8>) -> anyhow::Result<String> {
-    if ip.len() != 16 {
-        return Err(anyhow!("Could not Convert vec: {:?} to ipv6 string", ip));
-    }
-
-    let a = ((ip[0] as u16) << 8) | ip[1] as u16;
-    let b = ((ip[2] as u16) << 8) | ip[3] as u16;
-    let c = ((ip[4] as u16) << 8) | ip[5] as u16;
-    let d = ((ip[6] as u16) << 8) | ip[7] as u16;
-    let e = ((ip[8] as u16) << 8) | ip[9] as u16;
-    let f = ((ip[10] as u16) << 8) | ip[11] as u16;
-    let g = ((ip[12] as u16) << 8) | ip[13] as u16;
-    let h = ((ip[14] as u16) << 8) | ip[15] as u16;
-
-    let ipv6 = Ipv6Addr::new(a, b, c, d, e, f, g, h);
-
-    Ok(ipv6.to_string())
-}
-
 pub(crate) async fn dump_addresses(
-    handle: rtnetlink::Handle,
+    handle: Handle,
     iface: &str,
 ) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
@@ -331,41 +262,36 @@ pub(crate) async fn dump_addresses(
                 if let netlink_packet_route::address::Nla::Address(addr) =
                     nla_address
                 {
-                    let ip_type = get_ip_type(&addr);
-                    match ip_type {
-                        Some(iptype) => {
-                            if iptype == IpType::V4 {
-                                info!(
-                                    "\t ipv4: {}",
-                                    convert_ipv4_to_string(addr)
-                                        .unwrap_or_else(|_| {
-                                            "<error converting ip>".to_string()
-                                        })
-                                );
-                            } else if iptype == IpType::V6 {
-                                info!(
-                                    "\t ipv6: {}",
-                                    convert_ipv6_to_string(addr)
-                                        .unwrap_or_else(|_| {
-                                            "<error converting ip>".to_string()
-                                        })
-                                );
-                            }
+                    let ip_addr = addr.try_into()
+                        .map(|ip: [u8; 4]| Some(IpAddr::from(ip)))
+                        .unwrap_or_else(|addr| {
+                            addr.try_into()
+                                .map(|ip: [u8; 16]| Some(IpAddr::from(ip)))
+                                .unwrap_or_else(|addr| {
+                                    warn!("Could not Convert vec: {:?} to ipv4 or ipv6", addr);
+                                    None
+                                })
+                        });
+
+                    match &ip_addr {
+                        Some(IpAddr::V4(ip_addr)) => {
+                            info!("\t ipv4: {}", ip_addr);
                         }
-                        None => {
-                            warn!("Failed to get ip type of {:?}", addr);
+                        Some(IpAddr::V6(ip_addr)) => {
+                            info!("\t ipv6: {}", ip_addr);
                         }
+                        None => {}
                     }
                 }
             }
         }
         Ok(())
     } else {
-        return Err(anyhow!("link {} not found", iface));
+        Err(anyhow!("link {} not found", iface))
     }
 }
 
-pub(crate) async fn show_network_info(handle: rtnetlink::Handle) {
+pub(crate) async fn show_network_info(handle: Handle) {
     info!("=== Network Interfaces ===");
 
     info!("Addresses:");

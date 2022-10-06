@@ -54,12 +54,11 @@ use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
 
-use crate::init::network::add_route_v6;
 use crate::init::network::set_link_up;
-use crate::init::network::{add_address_ipv4, add_address_ipv6};
+use crate::init::network::{add_address, add_route_v6};
 use crate::init::power::spawn_thread_power_button_listener;
 
-use ipnetwork::{Ipv4Network, Ipv6Network};
+use ipnetwork::{IpNetwork, Ipv6Network};
 
 // use crate::init::fileio::show_dir;
 use crate::observe::observe_server::ObserveServer;
@@ -216,19 +215,20 @@ impl SystemRuntime {
         handle: rtnetlink::Handle,
     ) -> anyhow::Result<()> {
         if let Ok(ipv6) = format!("{}{}", LOOPBACK_IPV6, LOOPBACK_IPV6_SUBNET)
-            .parse::<Ipv6Network>()
+            .parse::<IpNetwork>()
         {
             if let Err(e) =
-                add_address_ipv6(LOOPBACK_DEV, ipv6, handle.clone()).await
+                add_address(LOOPBACK_DEV, ipv6, handle.clone()).await
             {
                 return Err(anyhow!("Failed to add ipv6 address to loopback device {}. Error={}", LOOPBACK_DEV, e));
             };
-        };
+        }
+
         if let Ok(ipv4) = format!("{}{}", LOOPBACK_IPV4, LOOPBACK_IPV4_SUBNET)
-            .parse::<Ipv4Network>()
+            .parse::<IpNetwork>()
         {
             if let Err(e) =
-                add_address_ipv4(LOOPBACK_DEV, ipv4, handle.clone()).await
+                add_address(LOOPBACK_DEV, ipv4, handle.clone()).await
             {
                 return Err(anyhow!("Failed to add ipv4 address to loopback device {}. Error={}", LOOPBACK_DEV, e));
             }
@@ -255,7 +255,7 @@ impl SystemRuntime {
                 .parse::<Ipv6Network>()
         {
             if let Err(e) =
-                add_address_ipv6(DEFAULT_NET_DEV, ipv6, handle.clone()).await
+                add_address(DEFAULT_NET_DEV, ipv6, handle.clone()).await
             {
                 return Err(anyhow!(
                     "Failed to add ipv6 address to device {}. Error={}",
