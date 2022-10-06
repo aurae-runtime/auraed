@@ -69,18 +69,18 @@ fn mount_vfs(
     info!("Mounting {}", target_name);
 
     // CString constructor ensures the trailing 0byte, which is required by libc::mount
-    let src_c_ctr = CString::new(source_name)?;
-    let target_name_c_ctr = CString::new(target_name)?;
+    let src_c_str = CString::new(source_name)?;
+    let target_name_c_str = CString::new(target_name)?;
 
     let ret = {
         #[cfg(not(target_os = "macos"))]
         {
-            let fstype_c_ctr = CString::new(fstype)?;
+            let fstype_c_str = CString::new(fstype)?;
             unsafe {
                 libc::mount(
-                    src_c_ctr.as_ptr(),
-                    target_name_c_ctr.as_ptr(),
-                    fstype_c_ctr.as_ptr(),
+                    src_c_str.as_ptr(),
+                    target_name_c_str.as_ptr(),
+                    fstype_c_str.as_ptr(),
                     0,
                     ptr::null(),
                 )
@@ -90,8 +90,8 @@ fn mount_vfs(
         #[cfg(target_os = "macos")]
         unsafe {
             libc::mount(
-                src_c_ctr.as_ptr(),
-                target_name_c_ctr.as_ptr(),
+                src_c_str.as_ptr(),
+                target_name_c_str.as_ptr(),
                 0,
                 ptr::null_mut(),
             )
