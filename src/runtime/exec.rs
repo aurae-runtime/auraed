@@ -42,31 +42,28 @@ pub struct Spawn {
 use std::process::Command;
 
 pub fn exec(cmd: &str) -> Result<Spawn, anyhow::Error> {
-    let spl = cmd.split(' ');
-    let ents: Vec<&str> = spl.collect();
-    if ents.is_empty() {
-        return Err(anyhow!("empty argument command string"));
-    }
+    let mut ents = cmd.split(' ');
 
     // Build the base command ents[0]
-    let base = ents.first().unwrap().to_string();
-    let c = base.clone();
-    let mut x = Command::new(base);
+    let base = match ents.next() {
+        Some(base) => base,
+        None => {
+            return Err(anyhow!("empty argument command string"));
+        }
+    };
 
-    // Add arguments if they exist
-    if ents.len() > 1 {
-        for ent in ents {
-            if ent == c {
-                continue;
-            }
-            x.arg(ent);
+    let mut command = Command::new(base);
+
+    for ent in ents {
+        if ent != base {
+            command.arg(ent);
         }
     }
 
     // Spawn
     // Executes the command as a child process, returning a handle to it.
     // By default, stdin, stdout and stderr are inherited from the parent.
-    let child = x.spawn()?;
+    let child = command.spawn()?;
     let spawn = Spawn { process: child };
     Ok(spawn)
 }

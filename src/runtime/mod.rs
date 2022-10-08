@@ -29,7 +29,6 @@
 \* -------------------------------------------------------------------------- */
 #![allow(dead_code)]
 tonic::include_proto!("runtime");
-tonic::include_proto!("meta");
 
 pub mod exec;
 
@@ -45,32 +44,6 @@ pub struct RuntimeService {}
 
 #[tonic::async_trait]
 impl Runtime for RuntimeService {
-    async fn start_executable(
-        &self,
-        req: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
-        let r = req.into_inner();
-        let meta = vec![meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        }];
-        let response =
-            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
-        Ok(Response::new(response))
-    }
-    async fn stop_executable(
-        &self,
-        req: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
-        let r = req.into_inner();
-        let meta = vec![meta::AuraeMeta {
-            code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
-        }];
-        let response =
-            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
-        Ok(Response::new(response))
-    }
     async fn register_executable(
         &self,
         req: Request<Executable>,
@@ -84,6 +57,35 @@ impl Runtime for RuntimeService {
             ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
         Ok(Response::new(response))
     }
+
+    async fn start_executable(
+        &self,
+        req: Request<Executable>,
+    ) -> Result<Response<ExecutableStatus>, Status> {
+        let r = req.into_inner();
+        let meta = vec![meta::AuraeMeta {
+            code: CODE_SUCCESS,
+            message: STATUS_READY.into(),
+        }];
+        let response =
+            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
+        Ok(Response::new(response))
+    }
+
+    async fn stop_executable(
+        &self,
+        req: Request<Executable>,
+    ) -> Result<Response<ExecutableStatus>, Status> {
+        let r = req.into_inner();
+        let meta = vec![meta::AuraeMeta {
+            code: CODE_SUCCESS,
+            message: STATUS_READY.into(),
+        }];
+        let response =
+            ExecutableStatus { meta, state: STATE_ACTIVE.into(), name: r.name };
+        Ok(Response::new(response))
+    }
+
     async fn destroy_executable(
         &self,
         req: Request<Executable>,

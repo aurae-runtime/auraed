@@ -29,7 +29,6 @@
 \* -------------------------------------------------------------------------- */
 
 tonic::include_proto!("observe");
-tonic::include_proto!("meta");
 
 use crate::codes::*;
 use crate::meta;

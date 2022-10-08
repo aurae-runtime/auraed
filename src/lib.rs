@@ -195,7 +195,8 @@ impl SystemRuntime {
     fn spawn_system_runtime_threads(&self) {
         // ---- MAIN DAEMON THREAD POOL ----
         // TODO: https://github.com/aurae-runtime/auraed/issues/33
-        match spawn_thread_power_button_listener(POWER_BUTTON_DEVICE) {
+        match spawn_thread_power_button_listener(Path::new(POWER_BUTTON_DEVICE))
+        {
             Ok(_) => {
                 info!("Spawned power button device listener");
             }
@@ -212,14 +213,12 @@ impl SystemRuntime {
 
     async fn configure_loopback(
         &self,
-        handle: rtnetlink::Handle,
+        handle: &rtnetlink::Handle,
     ) -> anyhow::Result<()> {
         if let Ok(ipv6) = format!("{}{}", LOOPBACK_IPV6, LOOPBACK_IPV6_SUBNET)
             .parse::<IpNetwork>()
         {
-            if let Err(e) =
-                add_address(LOOPBACK_DEV, ipv6, handle.clone()).await
-            {
+            if let Err(e) = add_address(LOOPBACK_DEV, ipv6, handle).await {
                 return Err(anyhow!("Failed to add ipv6 address to loopback device {}. Error={}", LOOPBACK_DEV, e));
             };
         }
@@ -227,14 +226,12 @@ impl SystemRuntime {
         if let Ok(ipv4) = format!("{}{}", LOOPBACK_IPV4, LOOPBACK_IPV4_SUBNET)
             .parse::<IpNetwork>()
         {
-            if let Err(e) =
-                add_address(LOOPBACK_DEV, ipv4, handle.clone()).await
-            {
+            if let Err(e) = add_address(LOOPBACK_DEV, ipv4, handle).await {
                 return Err(anyhow!("Failed to add ipv4 address to loopback device {}. Error={}", LOOPBACK_DEV, e));
             }
         };
 
-        if let Err(e) = set_link_up(handle.clone(), LOOPBACK_DEV).await {
+        if let Err(e) = set_link_up(handle, LOOPBACK_DEV).await {
             return Err(anyhow!(
                 "Failed to set link up for device {}. Error={}",
                 LOOPBACK_DEV,
@@ -248,15 +245,13 @@ impl SystemRuntime {
     // TODO: design network config struct
     async fn configure_nic(
         &self,
-        handle: rtnetlink::Handle,
+        handle: &rtnetlink::Handle,
     ) -> anyhow::Result<()> {
         if let Ok(ipv6) =
             format!("{}{}", DEFAULT_NET_DEV_IPV6, DEFAULT_NET_DEV_IPV6_SUBNET)
                 .parse::<Ipv6Network>()
         {
-            if let Err(e) =
-                add_address(DEFAULT_NET_DEV, ipv6, handle.clone()).await
-            {
+            if let Err(e) = add_address(DEFAULT_NET_DEV, ipv6, handle).await {
                 return Err(anyhow!(
                     "Failed to add ipv6 address to device {}. Error={}",
                     DEFAULT_NET_DEV,
@@ -264,7 +259,7 @@ impl SystemRuntime {
                 ));
             }
 
-            if let Err(e) = set_link_up(handle.clone(), DEFAULT_NET_DEV).await {
+            if let Err(e) = set_link_up(handle, DEFAULT_NET_DEV).await {
                 return Err(anyhow!(
                     "Failed to set link up for device {}. Error={}",
                     DEFAULT_NET_DEV,
@@ -274,8 +269,7 @@ impl SystemRuntime {
 
             if let Ok(destv6) = "::/0".to_string().parse::<Ipv6Network>() {
                 if let Err(e) =
-                    add_route_v6(&destv6, DEFAULT_NET_DEV, ipv6, handle.clone())
-                        .await
+                    add_route_v6(&destv6, DEFAULT_NET_DEV, &ipv6, handle).await
                 {
                     return Err(anyhow!(
                         "Failed to add ipv6 route to device {}. Error={}",
@@ -292,12 +286,12 @@ impl SystemRuntime {
     async fn init_pid1_network(
         &self,
         connection: Connection<RtnlMessage>,
-        handle: rtnetlink::Handle,
+        handle: &rtnetlink::Handle,
     ) {
         tokio::spawn(connection);
 
         trace!("configure {}", LOOPBACK_DEV);
-        match self.configure_loopback(handle.clone()).await {
+        match self.configure_loopback(handle).await {
             Ok(_) => {
                 info!("Successfully configured {}", LOOPBACK_DEV);
             }
@@ -308,7 +302,7 @@ impl SystemRuntime {
 
         trace!("configure {}", DEFAULT_NET_DEV);
 
-        match self.configure_nic(handle.clone()).await {
+        match self.configure_nic(handle).await {
             Ok(_) => {
                 info!("Successfully configured {}", DEFAULT_NET_DEV);
             }
@@ -335,8 +329,8 @@ impl SystemRuntime {
         trace!("configure network");
         //show_dir("/sys/class/net/", false); // Show available network interfaces
         match new_connection() {
-            Ok(val) => {
-                self.init_pid1_network(val.0, val.1).await;
+            Ok((connection, handle, ..)) => {
+                self.init_pid1_network(connection, &handle).await;
             }
             Err(e) => {
                 error!("Could not initialize network! Error={}", e);
