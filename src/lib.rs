@@ -29,7 +29,6 @@
 \* -------------------------------------------------------------------------- */
 
 #![warn(clippy::unwrap_used)]
-#![allow(clippy::derive_partial_eq_without_eq)]
 
 use anyhow::anyhow;
 use anyhow::Context;
@@ -102,13 +101,9 @@ impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         // Manage the socket permission/groups first\
         let _ = fs::remove_file(&self.socket);
-        let sock_res = Path::new(&self.socket)
+        let sock_path = Path::new(&self.socket)
             .parent()
-            .ok_or("unable to find socket path");
-        let sock_path = match sock_res {
-            Ok(path) => path,
-            Err(e) => return Err(e.into()),
-        };
+            .ok_or("unable to find socket path")?;
         tokio::fs::create_dir_all(sock_path).await.with_context(|| {
             format!(
                 "Failed to create directory for socket: {}",
@@ -184,13 +179,8 @@ impl AuraedRuntime {
         //runtime::hydrate(&db).await?;
 
         // Event loop
-        let res = handle.await?;
-        match res {
-            Ok(_) => {
-                info!("{:?}", res);
-            }
-            Err(e) => return Err(e.into()),
-        };
+        handle.await??;
+        info!("gRPC server exited successfully");
 
         Ok(())
     }

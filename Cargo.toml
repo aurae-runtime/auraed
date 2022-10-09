@@ -60,4 +60,5 @@ rtnetlink = "0.11.0"
 netlink-packet-route = "0.13.0" # Used for netlink_packet_route::rtnl::address::nlas definition
 
 [build-dependencies]
+anyhow = "1.0.65"
 tonic-build = "0.8"
