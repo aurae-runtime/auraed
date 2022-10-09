@@ -32,13 +32,6 @@
 
 pub const DATABASE_TREE: &str = "/.aurae";
 
-pub const STATUS_UNKNOWN: &str = "Unknown";
-pub const STATUS_READY: &str = "Ready";
-pub const STATUS_ERROR: &str = "Error";
-
-pub const STATE_ACTIVE: &str = "Active";
-pub const STATE_INACTIVE: &str = "Inactive";
-
 pub const MESSAGE_UNKNOWN: &str = "UNKNOWN";
 
 pub const CODE_SUCCESS: i32 = 0;

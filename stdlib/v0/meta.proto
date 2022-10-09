@@ -28,33 +28,37 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-//use std::process::Command;
+syntax = "proto3";
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Example running "make command" during the build
-    //Command::new("make").args(&["command"]).status().unwrap();
+package meta;
 
-    // gRPC
-    tonic_build::configure()
-        .type_attribute(
-            "meta.AuraeMeta",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .type_attribute(
-            "runtime.Executable",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .type_attribute(
-            "runtime.ExecutableStatus",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .compile(
-            &[
-                "stdlib/v0/meta.proto",
-                "stdlib/v0/runtime.proto",
-                "stdlib/v0/observe.proto",
-            ],
-            &["stdlib/v0/"],
-        )?;
-    Ok(())
+/// Status represents the state of an object within Aurae.
+/// The status Enum has special meaning used for each value.
+enum Status {
+  /// Unknown denotes a rogue status, and should only be used for emergencies or development. Generally speaking Aurae
+  /// should never have an unknown object unless something has gone very, very wrong.
+  STATUS_UNKNOWN = 0;
+  /// Standby denotes an object that is healthy but not active. Something that has passed any preliminary or
+  //  prerequisite steps but is not actively executing or running. Standby is a synonym for "enabled".
+  STATUS_STANDBY = 1;
+  /// Active denotes an object that is currently active. The object is currently executing at the point in time the
+  /// request was issued.
+  STATUS_ACTIVE = 3;
+  /// Passive is the opposite of standby. The object is registered but is disabled and has not gone through any
+  /// preliminary or prerequisite steps. Passive is a synonym for "disabled".
+  STATUS_PASSIVE = 4;
+  /// Error denotes a failure, but not severity. Something has gone wrong, there will be more information elsewhere.
+  STATUS_ERROR = 5;
+}
+
+message AuraeMeta {
+  int32 code = 1;
+  string name = 2;
+  string message = 3;
+}
+
+
+
+message ProcessMeta {
+  int32 pid = 1;
 }

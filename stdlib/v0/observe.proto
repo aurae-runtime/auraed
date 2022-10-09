@@ -28,33 +28,22 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-//use std::process::Command;
+syntax = "proto3";
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Example running "make command" during the build
-    //Command::new("make").args(&["command"]).status().unwrap();
+package observe;
 
-    // gRPC
-    tonic_build::configure()
-        .type_attribute(
-            "meta.AuraeMeta",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .type_attribute(
-            "runtime.Executable",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .type_attribute(
-            "runtime.ExecutableStatus",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .compile(
-            &[
-                "stdlib/v0/meta.proto",
-                "stdlib/v0/runtime.proto",
-                "stdlib/v0/observe.proto",
-            ],
-            &["stdlib/v0/"],
-        )?;
-    Ok(())
+import "meta.proto";
+
+service Observe {
+
+  rpc Status(StatusRequest) returns (StatusResponse) {}
+
+}
+
+message StatusRequest {
+  repeated meta.AuraeMeta meta = 1;
+}
+
+message StatusResponse {
+  repeated meta.AuraeMeta meta = 1;
 }

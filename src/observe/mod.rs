@@ -45,10 +45,11 @@ impl Observe for ObserveService {
         _request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, Status> {
         let meta = vec![meta::AuraeMeta {
+            name: "UNKNOWN_NAME".to_string(),
             code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
+            message: "UNKNOWN_MESSAGE".to_string(),
         }];
-        let response = StatusResponse { meta, state: STATE_ACTIVE.into() };
+        let response = StatusResponse { meta };
         Ok(Response::new(response))
     }
 }
