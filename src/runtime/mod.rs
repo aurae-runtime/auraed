@@ -44,29 +44,35 @@ pub struct RuntimeService {}
 
 #[tonic::async_trait]
 impl Runtime for RuntimeService {
-    async fn exec_start(
+    async fn executable_start(
         &self,
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let _r = request.into_inner();
         let meta = vec![meta::AuraeMeta {
+            name: "UNKNOWN_NAME".to_string(),
             code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
+            message: "UNKNOWN_MESSAGE".to_string(),
         }];
-        let response = ExecutableStatus { meta, state: STATE_ACTIVE.into() };
+        let proc = vec![meta::ProcessMeta { pid: -1 }];
+        let status = vec![meta::Status::Unknown as i32];
+        let response = ExecutableStatus { meta, proc, status };
         Ok(Response::new(response))
     }
 
-    async fn exec_stop(
+    async fn executable_stop(
         &self,
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let _r = request.into_inner();
         let meta = vec![meta::AuraeMeta {
+            name: "UNKNOWN_NAME".to_string(),
             code: CODE_SUCCESS,
-            message: STATUS_READY.into(),
+            message: "UNKNOWN_MESSAGE".to_string(),
         }];
-        let response = ExecutableStatus { meta, state: STATE_ACTIVE.into() };
+        let proc = vec![meta::ProcessMeta { pid: -1 }];
+        let status = vec![meta::Status::Unknown as i32];
+        let response = ExecutableStatus { meta, proc, status };
         Ok(Response::new(response))
     }
 
@@ -84,17 +90,17 @@ impl Runtime for RuntimeService {
         todo!()
     }
 
-    async fn vm_start(
+    async fn instance_start(
         &self,
-        _request: Request<Vm>,
-    ) -> Result<Response<VmStatus>, Status> {
+        _request: Request<Instance>,
+    ) -> Result<Response<InstanceStatus>, Status> {
         todo!()
     }
 
-    async fn vm_stop(
+    async fn instance_stop(
         &self,
-        _request: Request<Vm>,
-    ) -> Result<Response<VmStatus>, Status> {
+        _request: Request<Instance>,
+    ) -> Result<Response<InstanceStatus>, Status> {
         todo!()
     }
 }
