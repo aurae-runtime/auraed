@@ -51,7 +51,7 @@ fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
 }
 
 pub(crate) async fn set_link_up(
-    handle: Handle,
+    handle: &Handle,
     iface: &str,
 ) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
@@ -90,7 +90,7 @@ pub(crate) async fn set_link_down(
 pub(crate) async fn add_address(
     iface: &str,
     ip: impl Into<IpNetwork>,
-    handle: Handle,
+    handle: &Handle,
 ) -> anyhow::Result<()> {
     let ip = ip.into();
 
@@ -142,7 +142,7 @@ pub(crate) fn setup_sriov(iface: &str, limit: u16) -> anyhow::Result<()> {
 }
 
 pub(crate) async fn get_links(
-    handle: Handle,
+    handle: &Handle,
 ) -> anyhow::Result<HashMap<u32, String>> {
     let mut result = HashMap::new();
     let mut links = handle.link().get().execute();
@@ -161,13 +161,13 @@ pub(crate) async fn get_links(
 }
 
 async fn get_link_msg(
-    iface: &str,
-    handle: Handle,
+    iface: impl Into<String>,
+    handle: &Handle,
 ) -> anyhow::Result<LinkMessage> {
     match handle
         .link()
         .get()
-        .match_name(iface.to_string())
+        .match_name(iface.into())
         .execute()
         .try_next()
         .await
@@ -182,8 +182,8 @@ async fn get_link_msg(
     }
 }
 
-async fn get_iface_idx(iface: &str, handle: Handle) -> anyhow::Result<u32> {
-    match get_link_msg(iface, handle.clone()).await {
+async fn get_iface_idx(iface: &str, handle: &Handle) -> anyhow::Result<u32> {
+    match get_link_msg(iface, handle).await {
         Ok(link_msg) => Ok(link_msg.header.index),
         Err(e) => Err(e),
     }
@@ -193,10 +193,10 @@ async fn get_iface_idx(iface: &str, handle: Handle) -> anyhow::Result<u32> {
 pub(crate) async fn add_route_v6(
     dest: &Ipv6Network,
     iface: &str,
-    source: Ipv6Network,
-    handle: Handle,
+    source: &Ipv6Network,
+    handle: &Handle,
 ) -> anyhow::Result<()> {
-    match get_iface_idx(iface, handle.clone()).await {
+    match get_iface_idx(iface, handle).await {
         Ok(iface_idx) => {
             handle
                 .route()
@@ -217,10 +217,10 @@ pub(crate) async fn add_route_v6(
 pub(crate) async fn add_route_v4(
     dest: &Ipv4Network,
     iface: &str,
-    source: Ipv4Network,
-    handle: Handle,
+    source: &Ipv4Network,
+    handle: &Handle,
 ) -> anyhow::Result<()> {
-    match get_iface_idx(iface, handle.clone()).await {
+    match get_iface_idx(iface, handle).await {
         Ok(iface_idx) => {
             handle
                 .route()
@@ -238,7 +238,7 @@ pub(crate) async fn add_route_v4(
 }
 
 pub(crate) async fn dump_addresses(
-    handle: Handle,
+    handle: &Handle,
     iface: &str,
 ) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
@@ -291,16 +291,16 @@ pub(crate) async fn dump_addresses(
     }
 }
 
-pub(crate) async fn show_network_info(handle: Handle) {
+pub(crate) async fn show_network_info(handle: &Handle) {
     info!("=== Network Interfaces ===");
 
     info!("Addresses:");
-    let links_result = get_links(handle.clone()).await;
+    let links_result = get_links(handle).await;
 
     match links_result {
         Ok(links) => {
             for (_, iface) in links {
-                if let Err(e) = dump_addresses(handle.clone(), &iface).await {
+                if let Err(e) = dump_addresses(handle, &iface).await {
                     error!(
                         "Could not dump addresses for iface {}. Error={}",
                         iface, e

@@ -30,13 +30,7 @@
 
 use anyhow::anyhow;
 use log::{info, trace};
-use std::{
-    fs::{File, OpenOptions},
-    io::Read,
-    mem,
-    path::Path,
-    slice,
-};
+use std::{fs::OpenOptions, io::Read, mem, path::Path, slice};
 
 extern crate libc;
 
@@ -70,32 +64,28 @@ pub(crate) struct InputEvent {
 const KEY_POWER: u16 = 116;
 
 pub(crate) fn spawn_thread_power_button_listener(
-    power_btn_device_path: &str,
+    power_btn_device_path: impl AsRef<Path>,
 ) -> anyhow::Result<()> {
-    let power_btn_device_path = power_btn_device_path.to_string();
-    let mut file_options = OpenOptions::new();
-    file_options.read(true);
-    file_options.write(false);
-
-    let mut event_file: File;
-
-    match file_options.open(&power_btn_device_path) {
-        Ok(f) => event_file = f,
+    let mut event_file = match OpenOptions::new()
+        .read(true)
+        .write(false)
+        .open(&power_btn_device_path)
+    {
+        Ok(file) => file,
         Err(e) => {
             return Err(anyhow!(
                 "Could not open power button device {}. {:?}",
-                power_btn_device_path,
+                power_btn_device_path.as_ref().display(),
                 e
             ));
         }
-    }
+    };
 
     let mut event: InputEvent = unsafe { mem::zeroed() };
     let event_size = mem::size_of::<InputEvent>();
 
+    let power_btn_device = power_btn_device_path.as_ref().to_owned();
     std::thread::spawn(move || {
-        let power_btn_device = Path::new(&power_btn_device_path);
-
         loop {
             let event_slice = unsafe {
                 slice::from_raw_parts_mut(
