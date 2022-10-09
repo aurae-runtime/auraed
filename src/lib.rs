@@ -29,6 +29,7 @@
 \* -------------------------------------------------------------------------- */
 
 #![warn(clippy::unwrap_used)]
+#![allow(clippy::derive_partial_eq_without_eq)]
 
 use anyhow::anyhow;
 use anyhow::Context;
@@ -101,14 +102,19 @@ impl AuraedRuntime {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         // Manage the socket permission/groups first\
         let _ = fs::remove_file(&self.socket);
-        tokio::fs::create_dir_all(Path::new(&self.socket).parent().unwrap())
-            .await
-            .with_context(|| {
-                format!(
-                    "Failed to create directory for socket: {}",
-                    self.socket.display()
-                )
-            })?;
+        let sock_res = Path::new(&self.socket)
+            .parent()
+            .ok_or("unable to find socket path");
+        let sock_path = match sock_res {
+            Ok(path) => path,
+            Err(e) => return Err(e.into()),
+        };
+        tokio::fs::create_dir_all(sock_path).await.with_context(|| {
+            format!(
+                "Failed to create directory for socket: {}",
+                self.socket.display()
+            )
+        })?;
         trace!("{:#?}", self);
 
         let server_crt =
@@ -150,8 +156,7 @@ impl AuraedRuntime {
         // We set the mode to 766 for the Unix domain socket.
         // This is what allows non-root users to dial the socket
         // and authenticate with mTLS.
-        fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766))
-            .unwrap();
+        fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o766))?;
         info!("User Access Socket Created: {}", self.socket.display());
 
         // SQLite
@@ -179,9 +184,14 @@ impl AuraedRuntime {
         //runtime::hydrate(&db).await?;
 
         // Event loop
-        let res = handle.await.unwrap();
+        let res = handle.await?;
+        match res {
+            Ok(_) => {
+                info!("{:?}", res);
+            }
+            Err(e) => return Err(e.into()),
+        };
 
-        info!("{:?}", res);
         Ok(())
     }
 }
