@@ -1,38 +1,32 @@
-# Auraed
+# Aurae
 
-A runtime daemon written in Rust. 
+A multi-tenant runtime daemon written in Rust.
 
- - [X] Designed to run as pid 1
- - [X] mTLS backed gRPC API over unix domain socket
+ - [X] Pid 1 init system replaces systemd
+ - [X] SPIFFE/SPIRE mTLS backed gRPC API over unix domain socket and network devices
  - [X] Run executables
  - [ ] Run containers
- - [ ] Run virtual machines (as a hypervisor)
+ - [ ] Run instances (virtualization hypervisor using Firecracker)
  - [ ] Schedule workloads
- - [ ] Piping for `stdout` and `stderr` from scheduled workloads
- - [ ] Mapping network devices to workloads
- - [ ] Piping for kernel logs
- - [ ] Piping for syslog
- - [ ] Piping for kernel events
+ - [ ] Stream routing for `stdout` and `stderr`
+ - [ ] TTY Attaching for `stdin` to processes
+ - [ ] Mapping network devices
+ - [ ] Stream routing for kernel logs
+ - [ ] Streaming routing for syslog
+ - [ ] Stream routing for kernel events
  - [ ] Native eBPF support
- - [X] Built on glibc
+ - [X] Built on Rust [libc](https://github.com/rust-lang/libc) (Apache 2.0 replacement for glibc)
 
-## Build from source
+## Building from source
 
 We suggest using the [environment](https://github.com/aurae-runtime/environment) repository for building.
 
-Otherwise you will need to check out the Aurae API in the following directory structure.
-
 ```bash
-.
-├── api
-│   └── v1
-│       └── *.proto
-└── auraed
-    ├── Cargo.toml
-    └── Makefile
+make auraed
 ```
 
-Navigate to the `/auraed` directory and build using Make
+Otherwise you can check out this repository and leverage the Makefile in this repository.
+
 
 ```bash
 make install
