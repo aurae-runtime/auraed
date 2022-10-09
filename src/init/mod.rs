@@ -117,9 +117,18 @@ pub(crate) fn init_rootfs() {
         return;
     }
 
-    mount_vfs("none", "/dev", "devtmpfs").unwrap();
-    mount_vfs("none", "/sys", "sysfs").unwrap();
-    mount_vfs("proc", "/proc", "proc").unwrap();
+    let r = mount_vfs("none", "/dev", "devtmpfs");
+    if r.is_err() {
+        panic!("unable to mount /dev");
+    }
+    let r = mount_vfs("none", "/sys", "sysfs");
+    if r.is_err() {
+        panic!("unable to mount /sys");
+    }
+    let r = mount_vfs("proc", "/proc", "proc");
+    if r.is_err() {
+        panic!("unable to mount /proc");
+    }
 }
 
 pub(crate) fn init_syslog_logging(logger_level: Level) {
