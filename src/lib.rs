@@ -185,7 +185,7 @@ impl AuraedRuntime {
 
         // Event loop
         let res = handle.await?;
-        match sock_res {
+        match res {
             Ok(_) => {
                 info!("{:?}", res);
             }
