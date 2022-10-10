@@ -38,17 +38,11 @@ use std::net::IpAddr;
 use std::str;
 use std::thread;
 use std::time::Duration;
-use std::{cmp, fs, io};
 
 use netlink_packet_route::rtnl::link::nlas::Nla;
 use rtnetlink::Handle;
 
-fn get_sriov_capabilities(iface: &str) -> Result<String, io::Error> {
-    fs::read_to_string(format!(
-        "/sys/class/net/{}/device/sriov_totalvfs",
-        iface
-    ))
-}
+mod sriov;
 
 pub(crate) async fn set_link_up(
     handle: &Handle,
@@ -73,7 +67,7 @@ pub(crate) async fn set_link_up(
 
 #[allow(dead_code)]
 pub(crate) async fn set_link_down(
-    handle: Handle,
+    handle: &Handle,
     iface: &str,
 ) -> anyhow::Result<()> {
     let mut links = handle.link().get().match_name(iface.to_string()).execute();
@@ -104,40 +98,6 @@ pub(crate) async fn add_address(
             .await?
     }
     trace!("Added address to link {}", iface);
-    Ok(())
-}
-
-// Create max(limit, max possible sriov for given iface) sriov devices for the given iface
-#[allow(dead_code)]
-pub(crate) fn setup_sriov(iface: &str, limit: u16) -> anyhow::Result<()> {
-    if limit == 0 {
-        return Ok(());
-    }
-
-    let sriov_totalvfs = match get_sriov_capabilities(iface) {
-        Ok(val) => val,
-        Err(e) => {
-            return Err(anyhow!("sriov Error: failed to get sriov capabilities of device {}. {}", iface, e));
-        }
-    };
-
-    let sriov_totalvfs = match sriov_totalvfs.trim_end().parse::<u16>() {
-        Ok(val) => val,
-        Err(e) => {
-            return Err(anyhow!(
-                "sriov Error: failed to parse sriov capabilities. {}",
-                e
-            ));
-        }
-    };
-
-    let num = cmp::min(limit, sriov_totalvfs);
-
-    fs::write(
-        format!("/sys/class/net/{}/device/sriov_numvfs", iface),
-        num.to_string(),
-    )
-    .expect("Unable to write file");
     Ok(())
 }
 
@@ -189,7 +149,6 @@ async fn get_iface_idx(iface: &str, handle: &Handle) -> anyhow::Result<u32> {
     }
 }
 
-#[allow(dead_code)]
 pub(crate) async fn add_route_v6(
     dest: &Ipv6Network,
     iface: &str,

@@ -28,24 +28,21 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
-pub(crate) mod fileio;
-pub(crate) mod network;
-pub(crate) mod power;
+use crate::init::fs::FsError;
+use crate::init::logging::LoggingError;
+use crate::init::system_runtime::{
+    Pid1SystemRuntime, PidGt1SystemRuntime, SystemRuntime,
+};
+use log::Level;
 
-use anyhow::anyhow;
-use log::{error, info, warn, Level};
-use std::ffi::CString;
-use std::ptr;
-use syslog::{BasicLogger, Facility, Formatter3164};
+mod fileio;
+mod fs;
+mod logging;
+mod network;
+mod power;
+mod system_runtime;
 
-const AURAED_SYSLOG_NAME: &str = "auraed";
-
-pub fn get_pid() -> u32 {
-    std::process::id()
-}
-
-pub fn banner() -> String {
-    "
+const BANNER: &str = "
     +--------------------------------------------+
     |   █████╗ ██╗   ██╗██████╗  █████╗ ███████╗ |
     |  ██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝ |
@@ -53,132 +50,27 @@ pub fn banner() -> String {
     |  ██╔══██║██║   ██║██╔══██╗██╔══██║██╔══╝   |
     |  ██║  ██║╚██████╔╝██║  ██║██║  ██║███████╗ |
     |  ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ |
-    +--------------------------------------------+\n"
-        .to_string()
+    +--------------------------------------------+\n";
+
+#[derive(thiserror::Error, Debug)]
+pub(crate) enum InitError {
+    #[error(transparent)]
+    Logging(#[from] LoggingError),
+    #[error(transparent)]
+    Fs(#[from] FsError),
 }
 
-pub fn print_logo() {
-    println!("{}", banner());
-}
-
-fn mount_vfs(
-    source_name: &str,
-    target_name: &str,
-    fstype: &str,
-) -> anyhow::Result<()> {
-    info!("Mounting {}", target_name);
-
-    // CString constructor ensures the trailing 0byte, which is required by libc::mount
-    let src_c_str = CString::new(source_name)?;
-    let target_name_c_str = CString::new(target_name)?;
-
-    let ret = {
-        #[cfg(not(target_os = "macos"))]
-        {
-            let fstype_c_str = CString::new(fstype)?;
-            unsafe {
-                libc::mount(
-                    src_c_str.as_ptr(),
-                    target_name_c_str.as_ptr(),
-                    fstype_c_str.as_ptr(),
-                    0,
-                    ptr::null(),
-                )
-            }
-        }
-
-        #[cfg(target_os = "macos")]
-        unsafe {
-            libc::mount(
-                src_c_str.as_ptr(),
-                target_name_c_str.as_ptr(),
-                0,
-                ptr::null_mut(),
-            )
-        }
-    };
-
-    if ret < 0 {
-        error!("Failed to mount ({})", ret);
-        let error = CString::new("Error: ").expect("error creating CString");
-        unsafe {
-            libc::perror(error.as_ptr());
-        };
-
-        Err(anyhow!("Failed to mount ({})", ret))
-    } else {
-        Ok(())
+pub async fn init(logger_level: Level) {
+    let res = match std::process::id() {
+        0 => unreachable!(
+            "process is running as PID 0, which should be impossible"
+        ),
+        1 => Pid1SystemRuntime {}.init(logger_level),
+        _ => PidGt1SystemRuntime {}.init(logger_level),
     }
-}
+    .await;
 
-pub(crate) fn init_rootfs() {
-    if get_pid() != 1 {
-        warn!("Trying to initialize rootfs but auraed is not run as pid1. Abort setup of rootfs.");
-        return;
+    if let Err(e) = res {
+        panic!("Failed to initialize: {}", e)
     }
-
-    // TODO: Cleanup panics using thiserror
-    // https://github.com/aurae-runtime/aurae/issues/32
-    if mount_vfs("none", "/dev", "devtmpfs").is_err() {
-        panic!("unable to mount /dev");
-    }
-
-    if mount_vfs("none", "/sys", "sysfs").is_err() {
-        panic!("unable to mount /sys");
-    }
-
-    if mount_vfs("proc", "/proc", "proc").is_err() {
-        panic!("unable to mount /proc");
-    }
-}
-
-pub(crate) fn init_syslog_logging(logger_level: Level) {
-    // Syslog formatter
-    let formatter = Formatter3164 {
-        facility: Facility::LOG_USER,
-        hostname: None,
-        process: AURAED_SYSLOG_NAME.into(),
-        pid: 0,
-    };
-
-    // Initialize the logger
-    let logger_simple = simplelog::SimpleLogger::new(
-        logger_level.to_level_filter(),
-        simplelog::Config::default(),
-    );
-
-    let logger_syslog = match syslog::unix(formatter) {
-        Ok(log_val) => log_val,
-        Err(e) => {
-            panic!("Unable to setup syslog: {:?}", e);
-        }
-    };
-
-    match multi_log::MultiLogger::init(
-        vec![logger_simple, Box::new(BasicLogger::new(logger_syslog))],
-        logger_level,
-    ) {
-        Ok(_) => {}
-        Err(e) => panic!("unable to connect to syslog: {:?}", e),
-    };
-}
-
-// To discuss here https://github.com/aurae-runtime/auraed/issues/24:
-//      The "syslog" logger requires unix sockets.
-//      Syslog assumes that either /dev/log or /var/run/syslog are available [1].
-//      We need to discuss if there is a use case to log via unix sockets,
-//      other than fullfill the requirement of syslog crate.
-//      For now, auraed distinguishes between pid1 system and local (dev environment) logging.
-//      [1] https://docs.rs/syslog/latest/src/syslog/lib.rs.html#232-243
-pub(crate) fn init_pid1_logging(logger_level: Level) {
-    // Initialize the logger
-    let logger_simple = simplelog::SimpleLogger::new(
-        logger_level.to_level_filter(),
-        simplelog::Config::default(),
-    );
-
-    match multi_log::MultiLogger::init(vec![logger_simple], logger_level) {
-        Ok(_) => {}
-        Err(e) => panic!("unable to connect to syslog: {:?}", e),
-    };
 }
