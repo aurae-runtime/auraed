@@ -28,36 +28,48 @@
  *                                                                            *
 \* -------------------------------------------------------------------------- */
 
+use anyhow::Result;
 //use std::process::Command;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     // Example running "make command" during the build
     //Command::new("make").args(&["command"]).status().unwrap();
 
-    // gRPC
-    tonic_build::configure()
-        .server_mod_attribute("meta", "#[allow(clippy::unwrap_used)]")
-        .server_mod_attribute("runtime", "#[allow(clippy::unwrap_used)]")
-        .server_mod_attribute("observe", "#[allow(clippy::unwrap_used)]")
-        .type_attribute(
-            "meta.AuraeMeta",
+    generate_grpc_code()?;
+
+    Ok(())
+}
+
+fn generate_grpc_code() -> Result<()> {
+    let mut tonic_builder = tonic_build::configure();
+
+    // Generated services use unwrap. Add them here to suppress the warning.
+    for service in ["meta", "observe", "runtime"] {
+        tonic_builder = tonic_builder
+            .server_mod_attribute(service, "#[allow(clippy::unwrap_used)]");
+    }
+
+    // Types generated from proto messages derive PartialEq without Eq. Add them here to suppress the warning.
+    for message in [
+        "meta.AuraeMeta",
+        "meta.ProcessMeta",
+        "runtime.Executable",
+        "runtime.ExecutableStatus",
+    ] {
+        tonic_builder = tonic_builder.type_attribute(
+            message,
             "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .type_attribute(
-            "runtime.Executable",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .type_attribute(
-            "runtime.ExecutableStatus",
-            "#[allow(clippy::derive_partial_eq_without_eq)]",
-        )
-        .compile(
-            &[
-                "stdlib/v0/meta.proto",
-                "stdlib/v0/runtime.proto",
-                "stdlib/v0/observe.proto",
-            ],
-            &["stdlib/v0/"],
-        )?;
+        );
+    }
+
+    tonic_builder.compile(
+        &[
+            "stdlib/v0/meta.proto",
+            "stdlib/v0/runtime.proto",
+            "stdlib/v0/observe.proto",
+        ],
+        &["stdlib/v0/"],
+    )?;
+
     Ok(())
 }
