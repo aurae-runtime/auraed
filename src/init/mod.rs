@@ -118,6 +118,7 @@ pub(crate) fn init_rootfs() {
     }
 
     // TODO: Cleanup panics using thiserror
+    // https://github.com/aurae-runtime/aurae/issues/32
     if mount_vfs("none", "/dev", "devtmpfs").is_err() {
         panic!("unable to mount /dev");
     }
