@@ -58,6 +58,7 @@ sea-orm = { version = "^0.9.0", features = [ "sqlx-sqlite", "runtime-tokio-rustl
 ipnetwork = "0.20.0"
 rtnetlink = "0.11.0"
 netlink-packet-route = "0.13.0" # Used for netlink_packet_route::rtnl::address::nlas definition
+thiserror = "1.0.37"
 
 [build-dependencies]
 anyhow = "1.0.65"

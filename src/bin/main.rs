@@ -78,10 +78,8 @@ async fn daemon() -> i32 {
     // let logger_level = if matches.is_present("verbose") {
     let logger_level = if options.verbose { Level::Trace } else { Level::Info };
 
-    let system = SystemRuntime { logger_level };
-
     // Initializes Logging and prepares system if auraed is run as pid=1
-    system.init().await;
+    init::init(logger_level).await;
 
     trace!("**Logging: Verbose Mode**");
     info!("Starting Aurae Daemon Runtime...");
