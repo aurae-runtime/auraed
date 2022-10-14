@@ -49,14 +49,14 @@ impl Runtime for RuntimeService {
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let _r = request.into_inner();
-        let meta = vec![meta::AuraeMeta {
+        let meta = meta::AuraeMeta {
             name: "UNKNOWN_NAME".to_string(),
             code: CODE_SUCCESS,
             message: "UNKNOWN_MESSAGE".to_string(),
-        }];
-        let proc = vec![meta::ProcessMeta { pid: -1 }];
-        let status = vec![meta::Status::Unknown as i32];
-        let response = ExecutableStatus { meta, proc, status };
+        };
+        let proc = meta::ProcessMeta { pid: -1 };
+        let status = meta::Status::Unknown as i32;
+        let response = ExecutableStatus { meta: Some(meta), proc: Some(proc), status };
         Ok(Response::new(response))
     }
 
@@ -65,14 +65,14 @@ impl Runtime for RuntimeService {
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
         let _r = request.into_inner();
-        let meta = vec![meta::AuraeMeta {
+        let meta = meta::AuraeMeta {
             name: "UNKNOWN_NAME".to_string(),
             code: CODE_SUCCESS,
             message: "UNKNOWN_MESSAGE".to_string(),
-        }];
-        let proc = vec![meta::ProcessMeta { pid: -1 }];
-        let status = vec![meta::Status::Unknown as i32];
-        let response = ExecutableStatus { meta, proc, status };
+        };
+        let proc = meta::ProcessMeta { pid: -1 };
+        let status = meta::Status::Unknown as i32;
+        let response = ExecutableStatus { meta: Some(meta), proc: Some(proc), status };
         Ok(Response::new(response))
     }
 

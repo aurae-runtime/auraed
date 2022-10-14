@@ -44,12 +44,12 @@ impl Observe for ObserveService {
         &self,
         _request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, Status> {
-        let meta = vec![meta::AuraeMeta {
+        let meta = meta::AuraeMeta {
             name: "UNKNOWN_NAME".to_string(),
             code: CODE_SUCCESS,
             message: "UNKNOWN_MESSAGE".to_string(),
-        }];
-        let response = StatusResponse { meta };
+        };
+        let response = StatusResponse { meta: Some(meta) };
         Ok(Response::new(response))
     }
 }

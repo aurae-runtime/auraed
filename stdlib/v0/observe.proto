@@ -41,9 +41,9 @@ service Observe {
 }
 
 message StatusRequest {
-  repeated meta.AuraeMeta meta = 1;
+  meta.AuraeMeta meta = 1;
 }
 
 message StatusResponse {
-  repeated meta.AuraeMeta meta = 1;
+  meta.AuraeMeta meta = 1;
 }
