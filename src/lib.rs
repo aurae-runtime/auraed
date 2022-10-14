@@ -50,7 +50,6 @@ use crate::observe::ObserveService;
 use crate::runtime::runtime_server::RuntimeServer;
 use crate::runtime::RuntimeService;
 
-mod codes;
 pub mod init;
 mod meta;
 mod observe;
