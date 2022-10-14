@@ -49,12 +49,13 @@ enum Status {
   STATUS_PASSIVE = 4;
   /// Error denotes a failure, but not severity. Something has gone wrong, there will be more information elsewhere.
   STATUS_ERROR = 5;
+  // Complete denotes that an action is complete and no longer active.
+  STATUS_COMPLETE = 6;
 }
 
 message AuraeMeta {
-  int32 code = 1;
-  string name = 2;
-  string message = 3;
+  string name = 1;
+  string message = 2;
 }
 
 

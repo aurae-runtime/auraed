@@ -30,7 +30,6 @@
 
 tonic::include_proto!("observe");
 
-use crate::codes::*;
 use crate::meta;
 use crate::observe::observe_server::Observe;
 use tonic::{Request, Response, Status};
@@ -46,7 +45,6 @@ impl Observe for ObserveService {
     ) -> Result<Response<StatusResponse>, Status> {
         let meta = meta::AuraeMeta {
             name: "UNKNOWN_NAME".to_string(),
-            code: CODE_SUCCESS,
             message: "UNKNOWN_MESSAGE".to_string(),
         };
         let response = StatusResponse { meta: Some(meta) };

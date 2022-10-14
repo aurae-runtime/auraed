@@ -27,16 +27,17 @@
  *   limitations under the License.                                           *
  *                                                                            *
 \* -------------------------------------------------------------------------- */
+/*
+ * [Runtime] is a SYNCHRONOUS subsystem.
+ */
+
 #![allow(dead_code)]
 tonic::include_proto!("runtime");
 
-pub mod exec;
-
-use crate::codes::*;
 use crate::meta;
 use crate::runtime::runtime_server::Runtime;
-//use sea_orm::DatabaseConnection;
-//use sea_orm::Set;
+use anyhow::anyhow;
+use std::process::Command;
 use tonic::{Request, Response, Status};
 
 #[derive(Debug, Default, Clone)]
@@ -48,16 +49,66 @@ impl Runtime for RuntimeService {
         &self,
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
-        let _r = request.into_inner();
-        let meta = meta::AuraeMeta {
-            name: "UNKNOWN_NAME".to_string(),
-            code: CODE_SUCCESS,
-            message: "UNKNOWN_MESSAGE".to_string(),
-        };
-        let proc = meta::ProcessMeta { pid: -1 };
-        let status = meta::Status::Unknown as i32;
-        let response = ExecutableStatus { meta: Some(meta), proc: Some(proc), status };
-        Ok(Response::new(response))
+        let r = request.into_inner();
+        let cmd = command_from_string(&r.command);
+        match cmd {
+            Ok(mut cmd) => {
+                let output = cmd.output();
+                match output {
+                    Ok(output) => {
+                        let meta = meta::AuraeMeta {
+                            name: r.command,
+                            message: "-".to_string(),
+                        };
+                        let proc = meta::ProcessMeta { pid: -1 }; // todo @kris-nova get pid, we will probably want to spawn() and wait and remember the pid
+                        let status = meta::Status::Complete as i32;
+                        let response = ExecutableStatus {
+                            meta: Some(meta),
+                            proc: Some(proc),
+                            status,
+                            stdout: String::from_utf8(output.stdout).unwrap(),
+                            stderr: String::from_utf8(output.stderr).unwrap(),
+                            exit_code: output.status.to_string(),
+                        };
+                        Ok(Response::new(response))
+                    }
+                    Err(e) => {
+                        let meta = meta::AuraeMeta {
+                            name: "-".to_string(),
+                            message: format!("{:?}", e),
+                        };
+                        let proc = meta::ProcessMeta { pid: -1 };
+                        let status = meta::Status::Error as i32;
+                        let response = ExecutableStatus {
+                            meta: Some(meta),
+                            proc: Some(proc),
+                            status,
+                            stdout: "-".to_string(),
+                            stderr: "-".to_string(),
+                            exit_code: "-".to_string(),
+                        };
+                        Ok(Response::new(response))
+                    }
+                }
+            }
+            Err(e) => {
+                let meta = meta::AuraeMeta {
+                    name: "-".to_string(),
+                    message: format!("{:?}", e),
+                };
+                let proc = meta::ProcessMeta { pid: -1 };
+                let status = meta::Status::Error as i32;
+                let response = ExecutableStatus {
+                    meta: Some(meta),
+                    proc: Some(proc),
+                    status,
+                    stdout: "-".to_string(),
+                    stderr: "-".to_string(),
+                    exit_code: "-".to_string(),
+                };
+                Ok(Response::new(response))
+            }
+        }
     }
 
     async fn executable_stop(
@@ -67,12 +118,18 @@ impl Runtime for RuntimeService {
         let _r = request.into_inner();
         let meta = meta::AuraeMeta {
             name: "UNKNOWN_NAME".to_string(),
-            code: CODE_SUCCESS,
             message: "UNKNOWN_MESSAGE".to_string(),
         };
         let proc = meta::ProcessMeta { pid: -1 };
         let status = meta::Status::Unknown as i32;
-        let response = ExecutableStatus { meta: Some(meta), proc: Some(proc), status };
+        let response = ExecutableStatus {
+            meta: Some(meta),
+            proc: Some(proc),
+            status,
+            stdout: "-".to_string(),
+            stderr: "-".to_string(),
+            exit_code: "-".to_string(),
+        };
         Ok(Response::new(response))
     }
 
@@ -104,6 +161,24 @@ impl Runtime for RuntimeService {
         todo!()
     }
 }
+
+fn command_from_string(cmd: &str) -> Result<Command, anyhow::Error> {
+    let mut entries = cmd.split(' ');
+    let base = match entries.next() {
+        Some(base) => base,
+        None => {
+            return Err(anyhow!("empty base command string"));
+        }
+    };
+    let mut command = Command::new(base);
+    for ent in entries {
+        if ent != base {
+            command.arg(ent);
+        }
+    }
+    Ok(command)
+}
+
 //
 //
 // TODO @kris-nova is working here on prototyping sea orm for us

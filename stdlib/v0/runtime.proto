@@ -63,6 +63,9 @@ message ExecutableStatus {
   meta.AuraeMeta meta = 1;
   meta.ProcessMeta proc = 2;
   meta.Status status = 3;
+  string stdout = 4;
+  string stderr = 5;
+  string exit_code = 6;
 }
 
 message Container {
