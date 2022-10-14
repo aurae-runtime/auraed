@@ -1,2 +1,0 @@
-# Aurae Daemon 
-

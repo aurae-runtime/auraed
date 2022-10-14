@@ -2,17 +2,6 @@
 
 Read the original [whitepaper](https://docs.google.com/document/d/1dA591eipsgWeAlaSwbYNQtAQaES243IIqXPAfKhJSjU/edit#heading=h.vknhjb3d4yfc).
 
-- [Runtime](spec/runtime.md)
-    - [Executable](spec/runtime.md)
-        - ExecutableStart
-        - ExecutableStop
-    - [Container](spec/runtime.md)
-        - ContainerStart
-        - ContainerStop
-    - [Instance](spec/runtime.md)
-        - InstanceStart
-        - InstanceStop
-
 ### Subsystem Documentation
 
 - [Subsystem Specification](https://github.com/aurae-runtime/api/tree/main/spec#aurae-api-specification)
@@ -27,6 +16,7 @@ It is short, but the main points are:
 
 - Files should be named `lower_snake_case.proto`
 - Files should be ordered in the following manner
+
 ```proto
 // AURAE LICENSE HEADER
 
