@@ -1,35 +1,48 @@
 # Aurae Daemon
 
-The Aurae Daemon (auraed) is the main daemon that powers Aurae.
+The Aurae Daemon (auraed) is the main daemon that powers Aurae. 
 
- - [X] Pid 1 init system replaces systemd
- - [X] SPIFFE/SPIRE mTLS backed gRPC API over unix domain socket and network devices
- - [X] Run executables
- - [ ] Run containers
- - [ ] Run instances (virtualization hypervisor using Firecracker)
- - [ ] Schedule workloads
- - [ ] Stream routing for `stdout` and `stderr`
- - [ ] TTY Attaching for `stdin` to processes
- - [ ] Mapping network devices
- - [ ] Stream routing for kernel logs
- - [ ] Stream routing for syslog
- - [ ] Stream routing for kernel events
- - [ ] Native eBPF support
- - [X] Built on Rust [libc](https://github.com/rust-lang/libc) (Apache 2.0 replacement for glibc)
+The Aurae Daemon runs as a gRPC server which listens over a unix domain socket by default.
+
+``` 
+/var/run/aurae/aurae.sock
+```
+
+## Running Auraed 
+
+Running as `/init` is currently under active development.
+
+To run auraed as a standard library server you can run the daemon alongside your current init system.
+
+```bash 
+sudo -E auraed
+```
+
+Additional flags are listed below.
+
+```
+USAGE:
+    auraed [OPTIONS]
+
+OPTIONS:
+        --ca-crt <CA_CRT>            [default: /etc/aurae/pki/ca.crt]
+    -h, --help                       Print help information
+    -s, --socket <SOCKET>            [default: /var/run/aurae/aurae.sock]
+        --server-crt <SERVER_CRT>    [default: /etc/aurae/pki/_signed.server.crt]
+        --server-key <SERVER_KEY>    [default: /etc/aurae/pki/server.key]
+    -v, --verbose                    
+    -V, --version                    Print version information
+
+```
 
 ## Building from source
 
-We suggest using the [environment](https://github.com/aurae-runtime/environment) repository for building.
+We suggest using the [aurae](https://github.com/aurae-runtime/aurae) repository for building all parts of the project.
+
+If you intend on building this repository directly you can leverage the Makefile in this repository.
 
 ```bash
-make auraed
-```
-
-Otherwise you can check out this repository and leverage the Makefile in this repository.
-
-
-```bash
-make install
+make
 ```
 
 or using Cargo directly
