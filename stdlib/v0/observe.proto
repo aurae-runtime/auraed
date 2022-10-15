@@ -32,6 +32,8 @@ syntax = "proto3";
 
 package observe;
 
+option go_package = "github.com/aurae-runtime/client-go/pkg/stdlib/v0/observe";
+
 import "meta.proto";
 
 service Observe {

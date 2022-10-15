@@ -32,7 +32,7 @@ syntax = "proto3";
 
 package runtime;
 
-import "meta.proto";
+option go_package = "github.com/aurae-runtime/client-go/pkg/stdlib/v0/schedule";
 
 service Schedule {
 

@@ -32,6 +32,8 @@ syntax = "proto3";
 
 package meta;
 
+option go_package = "github.com/aurae-runtime/client-go/pkg/stdlib/v0/meta";
+
 /// Status represents the state of an object within Aurae.
 /// The status Enum has special meaning used for each value.
 enum Status {
