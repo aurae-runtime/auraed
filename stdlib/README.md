@@ -4,9 +4,7 @@ Read the original [whitepaper](https://docs.google.com/document/d/1dA591eipsgWeA
 
 ### Subsystem Documentation
 
-- [Subsystem Specification](https://github.com/aurae-runtime/api/tree/main/spec#aurae-api-specification)
-    - [Proposing a New Subsystem](https://github.com/aurae-runtime/api/tree/main/spec#proposing-a-new-subsystem)
-    - [Requesting a Change (RFC) to an existing subsystem](https://github.com/aurae-runtime/api/tree/main/spec#requesting-a-change-rfc-to-an-existing-subsystem)
+[//]: # (TODO - Include links to subsystem docs when they are reintroduced)
 
 ### API Convention
 
