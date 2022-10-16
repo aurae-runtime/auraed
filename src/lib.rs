@@ -51,6 +51,8 @@ use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
 use crate::runtime::runtime_server::RuntimeServer;
 use crate::runtime::RuntimeService;
+use crate::schedule::schedule_executable_server::ScheduleExecutableServer;
+use crate::schedule::ScheduleExecutableService;
 
 pub mod init;
 mod meta;
@@ -115,6 +117,9 @@ impl AuraedRuntime {
                 .tls_config(tls)?
                 .add_service(RuntimeServer::new(RuntimeService::default()))
                 .add_service(ObserveServer::new(ObserveService::default()))
+                .add_service(ScheduleExecutableServer::new(
+                    ScheduleExecutableService::default(),
+                ))
                 .serve_with_incoming(sock_stream)
                 .await
         });
