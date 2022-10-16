@@ -40,14 +40,15 @@ import "meta.proto";
 //  Use the Runtime subsystem to start and stop executables, containers, and instances.
 service Runtime {
 
-  rpc ExecutableStart(Executable) returns (ExecutableStatus) {}
-  rpc ExecutableStop(Executable) returns (ExecutableStatus) {}
+  rpc Exec(Executable) returns (ExecutableStatus) {}
 
-  rpc ContainerStart(Container) returns (ContainerStatus) {}
-  rpc ContainerStop(Container) returns (ContainerStatus) {}
+  //rpc ExecutableStop(Executable) returns (ExecutableStatus) {}
 
-  rpc InstanceStart(Instance) returns (InstanceStatus) {}
-  rpc InstanceStop(Instance) returns (InstanceStatus) {}
+  //rpc ContainerStart(Container) returns (ContainerStatus) {}
+  //rpc ContainerStop(Container) returns (ContainerStatus) {}
+
+  //rpc InstanceStart(Instance) returns (InstanceStatus) {}
+  //rpc InstanceStop(Instance) returns (InstanceStatus) {}
 
 }
 
