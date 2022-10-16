@@ -32,18 +32,20 @@
  */
 
 #![allow(dead_code)]
-tonic::include_proto!("runtime");
+tonic::include_proto!("schedule");
 
-use crate::runtime::runtime_server::Runtime;
+use crate::runtime::Executable;
+use crate::runtime::ExecutableStatus;
+use crate::schedule::schedule_executable_server::ScheduleExecutable;
 use crate::{command_from_string, meta};
 use tonic::{Request, Response, Status};
 
 #[derive(Debug, Default, Clone)]
-pub struct RuntimeService {}
+pub struct ScheduleExecutableService {}
 
 #[tonic::async_trait]
-impl Runtime for RuntimeService {
-    async fn exec(
+impl ScheduleExecutable for ScheduleExecutableService {
+    async fn now(
         &self,
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
@@ -108,54 +110,4 @@ impl Runtime for RuntimeService {
             }
         }
     }
-
-    // async fn executable_stop(
-    //     &self,
-    //     request: Request<Executable>,
-    // ) -> Result<Response<ExecutableStatus>, Status> {
-    //     let _r = request.into_inner();
-    //     let meta = meta::AuraeMeta {
-    //         name: "UNKNOWN_NAME".to_string(),
-    //         message: "UNKNOWN_MESSAGE".to_string(),
-    //     };
-    //     let proc = meta::ProcessMeta { pid: -1 };
-    //     let status = meta::Status::Unknown as i32;
-    //     let response = ExecutableStatus {
-    //         meta: Some(meta),
-    //         proc: Some(proc),
-    //         status,
-    //         stdout: "-".to_string(),
-    //         stderr: "-".to_string(),
-    //         exit_code: "-".to_string(),
-    //     };
-    //     Ok(Response::new(response))
-    // }
-    //
-    // async fn container_start(
-    //     &self,
-    //     _request: Request<Container>,
-    // ) -> Result<Response<ContainerStatus>, Status> {
-    //     todo!()
-    // }
-    //
-    // async fn container_stop(
-    //     &self,
-    //     _request: Request<Container>,
-    // ) -> Result<Response<ContainerStatus>, Status> {
-    //     todo!()
-    // }
-    //
-    // async fn instance_start(
-    //     &self,
-    //     _request: Request<Instance>,
-    // ) -> Result<Response<InstanceStatus>, Status> {
-    //     todo!()
-    // }
-    //
-    // async fn instance_stop(
-    //     &self,
-    //     _request: Request<Instance>,
-    // ) -> Result<Response<InstanceStatus>, Status> {
-    //     todo!()
-    // }
 }

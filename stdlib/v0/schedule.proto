@@ -30,7 +30,7 @@
 
 syntax = "proto3";
 
-package runtime;
+package schedule;
 
 option go_package = "github.com/aurae-runtime/client-go/pkg/stdlib/v0/schedule";
 
@@ -38,9 +38,9 @@ import "runtime.proto";
 
 service ScheduleExecutable {
 
-  rpc Now(Executable) returns (ExecutableStatus) {}
-  rpc Enable(Executable) returns (ExecutableStatus) {}
-  rpc Disable(Executable) returns (ExecutableStatus) {}
+  rpc Now(runtime.Executable) returns (runtime.ExecutableStatus) {}
+  //rpc Enable(Executable) returns (ExecutableStatus) {}
+  //rpc Disable(Executable) returns (ExecutableStatus) {}
 
 }
 

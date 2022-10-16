@@ -30,6 +30,7 @@
 
 #![warn(clippy::unwrap_used)]
 
+use anyhow::anyhow;
 use anyhow::Context;
 use log::*;
 use sea_orm::ConnectOptions;
@@ -41,6 +42,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::path::PathBuf;
+use std::process::Command;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
@@ -54,6 +56,7 @@ pub mod init;
 mod meta;
 mod observe;
 mod runtime;
+mod schedule;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 
@@ -154,6 +157,23 @@ impl AuraedRuntime {
 
         Ok(())
     }
+}
+
+pub fn command_from_string(cmd: &str) -> Result<Command, anyhow::Error> {
+    let mut entries = cmd.split(' ');
+    let base = match entries.next() {
+        Some(base) => base,
+        None => {
+            return Err(anyhow!("empty base command string"));
+        }
+    };
+    let mut command = Command::new(base);
+    for ent in entries {
+        if ent != base {
+            command.arg(ent);
+        }
+    }
+    Ok(command)
 }
 
 #[cfg(test)]
