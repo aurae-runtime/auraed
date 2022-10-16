@@ -27,78 +27,75 @@
  *   limitations under the License.                                           *
  *                                                                            *
 \* -------------------------------------------------------------------------- */
+/*
+ * [Runtime] is a SYNCHRONOUS subsystem.
+ */
 
-syntax = "proto3";
+#![allow(dead_code)]
+tonic::include_proto!("schedule");
 
-package runtime;
+use crate::runtime::Executable;
+use crate::schedule::schedule_executable_server::ScheduleExecutable;
+use crate::{command_from_string, meta};
+use tonic::{Request, Response, Status};
 
-option go_package = "github.com/aurae-runtime/client-go/pkg/stdlib/v0/runtime";
+#[derive(Debug, Default, Clone)]
+pub struct ScheduleExecutableService {}
 
-import "meta.proto";
+#[tonic::async_trait]
+impl ScheduleExecutable for ScheduleExecutableService {
+    async fn enable(
+        &self,
+        request: Request<Executable>,
+    ) -> Result<Response<ExecutableEnableResponse>, Status> {
+        let r = request.into_inner();
+        let cmd = command_from_string(&r.command);
+        match cmd {
+            Ok(mut cmd) => {
+                let output = cmd.output();
+                match output {
+                    Ok(_) => {
+                        let meta = meta::AuraeMeta {
+                            name: r.command,
+                            message: "-".to_string(),
+                        };
+                        let response =
+                            ExecutableEnableResponse { meta: Some(meta) };
+                        Ok(Response::new(response))
+                    }
+                    Err(e) => {
+                        let meta = meta::AuraeMeta {
+                            name: "-".to_string(),
+                            message: format!("{:?}", e),
+                        };
+                        let response =
+                            ExecutableEnableResponse { meta: Some(meta) };
+                        Ok(Response::new(response))
+                    }
+                }
+            }
+            Err(e) => {
+                let meta = meta::AuraeMeta {
+                    name: "-".to_string(),
+                    message: format!("{:?}", e),
+                };
+                let response = ExecutableEnableResponse { meta: Some(meta) };
+                Ok(Response::new(response))
+            }
+        }
+    }
 
-/// Runtime is a synchronous and immediate subsystem.
-//  Use the Runtime subsystem to start and stop executables, containers, and instances.
-service Runtime {
+    async fn disable(
+        &self,
+        _request: Request<Executable>,
+    ) -> Result<Response<ExecutableDisableResponse>, Status> {
+        todo!()
+    }
 
-  rpc Exec(Executable) returns (ExecutableStatus) {}
-
-  //rpc ExecutableStop(Executable) returns (ExecutableStatus) {}
-
-  //rpc ContainerStart(Container) returns (ContainerStatus) {}
-  //rpc ContainerStop(Container) returns (ContainerStatus) {}
-
-  //rpc InstanceStart(Instance) returns (InstanceStatus) {}
-  //rpc InstanceStop(Instance) returns (InstanceStatus) {}
-
-}
-
-message Executable {
-  meta.AuraeMeta meta = 1;
-
-  /// Command resembles systemd's ExecStart. This is the shell command (with arguments) you intend to execute.
-  string command = 3;
-
-  /// Comment is an arbitrary (user defined) comment used to identify the Executable at runtime.
-  string comment = 4;
-}
-
-message ExecutableStatus {
-  meta.AuraeMeta meta = 1;
-  meta.ProcessMeta proc = 2;
-  meta.Status status = 3;
-  string stdout = 4;
-  string stderr = 5;
-  string exit_code = 6;
-}
-
-message Container {
-  meta.AuraeMeta meta = 1;
-  string name = 2;
-  string image = 3;
-}
-
-message ContainerStatus {
-  meta.AuraeMeta meta = 1;
-  meta.ProcessMeta proc = 2;
-  meta.Status status = 3;
-}
-
-message Instance {
-  meta.AuraeMeta meta = 1;
-  string name = 2;
-  string image = 3;
-}
-
-message InstanceStatus {
-  meta.AuraeMeta meta = 1;
-  meta.Status status = 2;
-}
-
-message InstanceMeta {
-  meta.AuraeMeta meta = 1;
-}
-
-message InstanceMetaStatus {
-  meta.AuraeMeta meta = 1;
-  meta.Status status = 2;
+    async fn destroy(
+        &self,
+        _request: Request<Executable>,
+    ) -> Result<Response<ExecutableDestroyResponse>, Status> {
+        todo!()
+    }
 }

@@ -44,7 +44,7 @@ fn generate_grpc_code() -> Result<()> {
     let mut tonic_builder = tonic_build::configure();
 
     // Generated services use unwrap. Add them here to suppress the warning.
-    for service in ["meta", "observe", "runtime"] {
+    for service in ["meta", "observe", "runtime", "schedule"] {
         tonic_builder = tonic_builder
             .server_mod_attribute(service, "#[allow(clippy::unwrap_used)]");
     }
@@ -66,6 +66,7 @@ fn generate_grpc_code() -> Result<()> {
         &[
             "stdlib/v0/meta.proto",
             "stdlib/v0/runtime.proto",
+            "stdlib/v0/schedule.proto",
             "stdlib/v0/observe.proto",
         ],
         &["stdlib/v0/"],

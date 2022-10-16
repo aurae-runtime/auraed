@@ -30,6 +30,7 @@
 
 #![warn(clippy::unwrap_used)]
 
+use anyhow::anyhow;
 use anyhow::Context;
 use log::*;
 use sea_orm::ConnectOptions;
@@ -41,6 +42,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::path::PathBuf;
+use std::process::Command;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::{Certificate, Identity, Server, ServerTlsConfig};
@@ -49,11 +51,14 @@ use crate::observe::observe_server::ObserveServer;
 use crate::observe::ObserveService;
 use crate::runtime::runtime_server::RuntimeServer;
 use crate::runtime::RuntimeService;
+use crate::schedule::schedule_executable_server::ScheduleExecutableServer;
+use crate::schedule::ScheduleExecutableService;
 
 pub mod init;
 mod meta;
 mod observe;
 mod runtime;
+mod schedule;
 
 pub const AURAE_SOCK: &str = "/var/run/aurae/aurae.sock";
 
@@ -112,6 +117,9 @@ impl AuraedRuntime {
                 .tls_config(tls)?
                 .add_service(RuntimeServer::new(RuntimeService::default()))
                 .add_service(ObserveServer::new(ObserveService::default()))
+                .add_service(ScheduleExecutableServer::new(
+                    ScheduleExecutableService::default(),
+                ))
                 .serve_with_incoming(sock_stream)
                 .await
         });
@@ -154,6 +162,23 @@ impl AuraedRuntime {
 
         Ok(())
     }
+}
+
+pub fn command_from_string(cmd: &str) -> Result<Command, anyhow::Error> {
+    let mut entries = cmd.split(' ');
+    let base = match entries.next() {
+        Some(base) => base,
+        None => {
+            return Err(anyhow!("empty base command string"));
+        }
+    };
+    let mut command = Command::new(base);
+    for ent in entries {
+        if ent != base {
+            command.arg(ent);
+        }
+    }
+    Ok(command)
 }
 
 #[cfg(test)]
