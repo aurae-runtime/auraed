@@ -38,8 +38,7 @@ import "runtime.proto";
 
 service ScheduleExecutable {
 
-  rpc Now(runtime.Executable) returns (runtime.ExecutableStatus) {}
-  //rpc Enable(Executable) returns (ExecutableStatus) {}
+  rpc Enable(runtime.Executable) returns (runtime.ExecutableStatus) {}
   //rpc Disable(Executable) returns (ExecutableStatus) {}
 
 }

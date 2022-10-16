@@ -45,7 +45,7 @@ pub struct ScheduleExecutableService {}
 
 #[tonic::async_trait]
 impl ScheduleExecutable for ScheduleExecutableService {
-    async fn now(
+    async fn enable(
         &self,
         request: Request<Executable>,
     ) -> Result<Response<ExecutableStatus>, Status> {
