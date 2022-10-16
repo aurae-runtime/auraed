@@ -35,11 +35,53 @@ package schedule;
 option go_package = "github.com/aurae-runtime/client-go/pkg/stdlib/v0/schedule";
 
 import "runtime.proto";
+import "meta.proto";
 
-service ScheduleExecutable {
+service Schedule {
 
-  rpc Enable(runtime.Executable) returns (runtime.ExecutableStatus) {}
-  //rpc Disable(Executable) returns (ExecutableStatus) {}
+  // ShowEnabled will return a response of everything enabled on a system
+  rpc ShowEnabled(ShowEnabledRequest) returns (ShowEnabledResponse) {}
+
+  // ShowDisabled will return a response of everything disabled on a system
+  rpc ShowDisabled(ShowDisabledRequest) returns (ShowDisabledResponse) {}
 
 }
 
+// We break ScheduleExecutable out into its own subsystem for authz purposes
+service ScheduleExecutable {
+
+  rpc Enable(runtime.Executable) returns (ExecutableEnableResponse) {}
+  rpc Disable(runtime.Executable) returns (ExecutableDisableResponse) {}
+  rpc Destroy(runtime.Executable) returns (ExecutableDestroyResponse) {}
+
+}
+
+message ShowEnabledRequest {
+  meta.AuraeMeta meta = 1;
+}
+
+message ShowEnabledResponse {
+  meta.AuraeMeta meta = 1;
+  repeated runtime.Executable Executables = 2;
+}
+
+message ShowDisabledRequest {
+  meta.AuraeMeta meta = 1;
+}
+
+message ShowDisabledResponse {
+  meta.AuraeMeta meta = 1;
+  repeated runtime.Executable Executables = 2;
+}
+
+message ExecutableEnableResponse {
+  meta.AuraeMeta meta = 1;
+}
+
+message ExecutableDisableResponse {
+  meta.AuraeMeta meta = 1;
+}
+
+message ExecutableDestroyResponse {
+  meta.AuraeMeta meta = 1;
+}

@@ -35,7 +35,6 @@
 tonic::include_proto!("schedule");
 
 use crate::runtime::Executable;
-use crate::runtime::ExecutableStatus;
 use crate::schedule::schedule_executable_server::ScheduleExecutable;
 use crate::{command_from_string, meta};
 use tonic::{Request, Response, Status};
@@ -48,28 +47,20 @@ impl ScheduleExecutable for ScheduleExecutableService {
     async fn enable(
         &self,
         request: Request<Executable>,
-    ) -> Result<Response<ExecutableStatus>, Status> {
+    ) -> Result<Response<ExecutableEnableResponse>, Status> {
         let r = request.into_inner();
         let cmd = command_from_string(&r.command);
         match cmd {
             Ok(mut cmd) => {
                 let output = cmd.output();
                 match output {
-                    Ok(output) => {
+                    Ok(_) => {
                         let meta = meta::AuraeMeta {
                             name: r.command,
                             message: "-".to_string(),
                         };
-                        let proc = meta::ProcessMeta { pid: -1 }; // todo @kris-nova get pid, we will probably want to spawn() and wait and remember the pid
-                        let status = meta::Status::Complete as i32;
-                        let response = ExecutableStatus {
-                            meta: Some(meta),
-                            proc: Some(proc),
-                            status,
-                            stdout: String::from_utf8(output.stdout).unwrap(),
-                            stderr: String::from_utf8(output.stderr).unwrap(),
-                            exit_code: output.status.to_string(),
-                        };
+                        let response =
+                            ExecutableEnableResponse { meta: Some(meta) };
                         Ok(Response::new(response))
                     }
                     Err(e) => {
@@ -77,16 +68,8 @@ impl ScheduleExecutable for ScheduleExecutableService {
                             name: "-".to_string(),
                             message: format!("{:?}", e),
                         };
-                        let proc = meta::ProcessMeta { pid: -1 };
-                        let status = meta::Status::Error as i32;
-                        let response = ExecutableStatus {
-                            meta: Some(meta),
-                            proc: Some(proc),
-                            status,
-                            stdout: "-".to_string(),
-                            stderr: "-".to_string(),
-                            exit_code: "-".to_string(),
-                        };
+                        let response =
+                            ExecutableEnableResponse { meta: Some(meta) };
                         Ok(Response::new(response))
                     }
                 }
@@ -96,18 +79,23 @@ impl ScheduleExecutable for ScheduleExecutableService {
                     name: "-".to_string(),
                     message: format!("{:?}", e),
                 };
-                let proc = meta::ProcessMeta { pid: -1 };
-                let status = meta::Status::Error as i32;
-                let response = ExecutableStatus {
-                    meta: Some(meta),
-                    proc: Some(proc),
-                    status,
-                    stdout: "-".to_string(),
-                    stderr: "-".to_string(),
-                    exit_code: "-".to_string(),
-                };
+                let response = ExecutableEnableResponse { meta: Some(meta) };
                 Ok(Response::new(response))
             }
         }
+    }
+
+    async fn disable(
+        &self,
+        _request: Request<Executable>,
+    ) -> Result<Response<ExecutableDisableResponse>, Status> {
+        todo!()
+    }
+
+    async fn destroy(
+        &self,
+        _request: Request<Executable>,
+    ) -> Result<Response<ExecutableDestroyResponse>, Status> {
+        todo!()
     }
 }
